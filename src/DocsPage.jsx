@@ -157,7 +157,7 @@ export default function DocsPage() {
             <p style={{ fontSize:13, color:C.textMid, lineHeight:1.8, marginBottom:12 }}>
               Sign up at <a href="https://aivildev.com/signup">aivildev.com/signup</a> to get your free API key. It looks like:
             </p>
-            <Code lang="text">aivil_f847234688da05f95d1350cef7fcd098530a97b6...</Code>
+            <Code lang="text">aivil_your_key_here_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...</Code>
 
             <h3 style={{ fontSize:16, color:C.text, marginBottom:12, marginTop:24, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1 }}>3. Create your first agent</h3>
             <Code>{`const AIVIL = require('aivil')
