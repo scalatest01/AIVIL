@@ -1,63 +1,117 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// AIVIL — AI Vital Identity Layer
+// AIVIL — AI Vital Identity Layer  v2.2.0
 // npm install aivil
 // The civil registry for artificial intelligence
-// Open source forever · AGPL-3.0 License · github.com/scalatest01/AIVIL
+// Open source forever · AGPL-3.0 · github.com/scalatest01/AIVIL
 // ─────────────────────────────────────────────────────────────────────────────
 
 "use strict";
 
-const AIVIL_VERSION  = "2.1.5";
-const DEFAULT_API    = "https://api.aivildev.com";
-const REGISTRY_BASE  = "https://aivildev.com";
+const AIVIL_VERSION   = "2.2.0";
+const DEFAULT_API     = "https://api.aivildev.com";
+const DEFAULT_TIMEOUT = 8000;
+const MAX_RETRIES     = 2;
 
-// ─── SHOW STARTUP MESSAGE ─────────────────────────────────────────────────────
+// ─── STARTUP MESSAGE ─────────────────────────────────────────────────────────
 if (!process.env.AIVIL_KEY && !process.env.AIVIL_API_KEY) {
-  console.log(`
-  ╔════════════════════════════════════════╗
-  ║           AIVIL v${AIVIL_VERSION}                ║
-  ║   The Civil Registry for AI Agents    ║
-  ╠════════════════════════════════════════╣
-  ║                                        ║
-  ║  ⚠  NO API KEY DETECTED               ║
-  ║                                        ║
-  ║  Try it instantly (demo mode):         ║
-  ║  const aivil = new AIVIL({            ║
-  ║    apiKey: "aivil_demo"               ║
-  ║  })                                    ║
-  ║                                        ║
-  ║  Get your free key in 30 seconds:     ║
-  ║  → https://aivildev.com/signup        ║
-  ║                                        ║
-  ╚════════════════════════════════════════╝
-`);
+  console.log(
+    "\n  ╔════════════════════════════════════════╗" +
+    "\n  ║           AIVIL v" + AIVIL_VERSION + "               ║" +
+    "\n  ║   The Civil Registry for AI Agents    ║" +
+    "\n  ╠════════════════════════════════════════╣" +
+    "\n  ║                                        ║" +
+    "\n  ║  ⚠  NO API KEY DETECTED               ║" +
+    "\n  ║                                        ║" +
+    "\n  ║  Get your free key in 30 seconds:     ║" +
+    "\n  ║  → https://aivildev.com/signup        ║" +
+    "\n  ║                                        ║" +
+    "\n  ╚════════════════════════════════════════╝\n"
+  );
 }
+
+// ─── CUSTOM ERRORS ────────────────────────────────────────────────────────────
+class AIVILError extends Error {
+  constructor(message, code, status) {
+    super(message);
+    this.name   = "AIVILError";
+    this.code   = code   || "UNKNOWN";
+    this.status = status || 500;
+  }
+}
+
+class AIVILTimeoutError extends AIVILError {
+  constructor(ms) {
+    super(`AIVIL request timed out after ${ms}ms`, "TIMEOUT", 408);
+    this.name = "AIVILTimeoutError";
+  }
+}
+
+class AIVILAuthError extends AIVILError {
+  constructor(msg) {
+    super(msg || "Invalid API key. Check aivildev.com/app", "AUTH_ERROR", 401);
+    this.name = "AIVILAuthError";
+  }
+}
+
+class AIVILPlanError extends AIVILError {
+  constructor(msg) {
+    super(msg || "Plan limit reached. Upgrade at aivildev.com/pricing", "PLAN_LIMIT", 403);
+    this.name        = "AIVILPlanError";
+    this.upgradeUrl  = "https://aivildev.com/pricing";
+  }
+}
+
+// ─── FETCH WITH TIMEOUT ───────────────────────────────────────────────────────
+const fetchWithTimeout = async (url, opts, timeout) => {
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const res = await fetch(url, { ...opts, signal: ctrl.signal });
+    clearTimeout(timer);
+    return res;
+  } catch (e) {
+    clearTimeout(timer);
+    if (e.name === "AbortError") throw new AIVILTimeoutError(timeout);
+    throw e;
+  }
+};
 
 // ─── MAIN CLASS ───────────────────────────────────────────────────────────────
 class AIVIL {
+  /**
+   * @param {Object} config
+   * @param {string} config.apiKey           - Your AIVIL API key (aivil_...)
+   * @param {string} [config.baseUrl]        - Custom API URL (default: api.aivildev.com)
+   * @param {number} [config.timeout=8000]   - Request timeout in ms
+   * @param {number} [config.retries=2]      - Retry attempts on network errors
+   * @param {string} [config.fallback]       - "escalate"|"approve"|"block" if AIVIL unreachable
+   * @param {boolean}[config.debug=false]    - Log all requests
+   */
   constructor(config = {}) {
-    this.apiKey  = config.apiKey
+    this.apiKey   = config.apiKey
       || process.env.AIVIL_API_KEY
       || process.env.AIVIL_KEY
       || "";
-    this.baseUrl = config.baseUrl || DEFAULT_API;
+    this.baseUrl  = (config.baseUrl || DEFAULT_API).replace(/\/$/, "");
+    this.timeout  = config.timeout  || DEFAULT_TIMEOUT;
+    this.retries  = config.retries  ?? MAX_RETRIES;
+    this.fallback = config.fallback || "escalate";
+    this._debug   = config.debug    || false;
+    this._log     = this._debug ? (...a) => console.log("[AIVIL]", ...a) : () => {};
 
     if (!this.apiKey) {
-      throw new Error(
-        "\n\n  AIVIL: No API key provided.\n" +
+      throw new AIVILAuthError(
+        "No API key provided.\n" +
         "  Get your free key at: https://aivildev.com/signup\n" +
-        "  Then use: new AIVIL({ apiKey: 'aivil_your_key' })\n"
+        "  Then: new AIVIL({ apiKey: 'aivil_your_key' })"
       );
     }
   }
 
-  // ─── HTTP HELPER ────────────────────────────────────────────────────────────
-  async _request(method, path, body) {
-    const fetch = globalThis.fetch || (await import("node-fetch").then(m => m.default).catch(() => {
-      throw new Error("AIVIL: fetch is not available. Use Node.js 18+ or install node-fetch.");
-    }));
-
-    const url = `${this.baseUrl}${path}`;
+  // ─── HTTP WITH RETRY ──────────────────────────────────────────────────────
+  async _request(method, path, body, attempt = 0) {
+    this._log(`${method} ${path} (attempt ${attempt + 1})`);
+    const url  = `${this.baseUrl}${path}`;
     const opts = {
       method,
       headers: {
@@ -68,204 +122,179 @@ class AIVIL {
     };
     if (body) opts.body = JSON.stringify(body);
 
-    let res;
+    let res, data;
     try {
-      res = await fetch(url, opts);
+      res = await fetchWithTimeout(url, opts, this.timeout);
     } catch (e) {
-      throw new Error(`AIVIL: Cannot connect to ${this.baseUrl}. Check your internet connection. (${e.message})`);
+      // Retry on network/timeout errors
+      if (attempt < this.retries && (e instanceof AIVILTimeoutError || e.code === "ECONNREFUSED" || e.code === "ENOTFOUND")) {
+        this._log(`Retrying in 1s... (${attempt + 1}/${this.retries})`);
+        await new Promise(r => setTimeout(r, 1000));
+        return this._request(method, path, body, attempt + 1);
+      }
+      throw new AIVILError(`Cannot connect to AIVIL (${e.message}). Check your internet connection.`, "NETWORK_ERROR");
     }
 
-    let data;
     try {
       data = await res.json();
     } catch (e) {
-      throw new Error(`AIVIL: Server returned non-JSON response (status ${res.status})`);
+      throw new AIVILError(`Server returned non-JSON (status ${res.status})`, "PARSE_ERROR", res.status);
     }
 
-    if (!res.ok) {
-      throw new Error(`AIVIL: ${data.error || `HTTP ${res.status}`}`);
-    }
+    if (res.status === 401) throw new AIVILAuthError(data.error);
+    if (res.status === 403) throw new AIVILPlanError(data.error);
+    if (!res.ok) throw new AIVILError(data.error || `HTTP ${res.status}`, "API_ERROR", res.status);
 
     return data;
   }
 
-  // ─── CREATE AGENT ───────────────────────────────────────────────────────────
+  // ─── CREATE AGENT ────────────────────────────────────────────────────────
   /**
-   * Register a new AI agent with AIVIL.
-   * Creates a permanent verified identity with cryptographic keypair,
-   * DID document, birth certificate, and policy engine.
-   *
+   * Register a new AI agent with verified identity, DID, and policy engine.
    * @param {Object} config
-   * @param {string} config.name         - Agent name e.g. "Prometheus"
-   * @param {string} config.role         - Agent role e.g. "Procurement Specialist"
-   * @param {string} config.owner        - Owner name e.g. "Acme Corp"
+   * @param {string} config.name         - Agent name
+   * @param {string} config.role         - Agent role
+   * @param {string} config.owner        - Owner name or company
    * @param {string} config.purpose      - What this agent does
-   * @param {string} config.jurisdiction - "Delaware_USA" | "EU_GDPR" | "UK_GDPR" | "Singapore"
-   * @param {Object} config.policy       - Policy configuration
-   * @returns {Promise<{agent, privateKeyJwk}>}
+   * @param {string} config.jurisdiction - "Delaware_USA"|"EU_GDPR"|"UK_GDPR"|"Singapore"
+   * @param {Object} config.policy       - Policy rules
+   * @returns {Promise<{agent, privateKeyJwk, warning}>}
    */
   async createAgent(config) {
+    const required = ["name", "role", "owner", "jurisdiction"];
+    for (const f of required) {
+      if (!config[f]) throw new AIVILError(`createAgent requires '${f}'`, "MISSING_FIELD");
+    }
     const data = await this._request("POST", "/agents", config);
-    return {
-      agent:         data.agent,
-      privateKeyJwk: data.agent?.private_key || null,
-      warning:       data.warning,
-    };
+    if (data.warning) console.warn(`[AIVIL] ⚠ ${data.warning}`);
+    return { agent: data.agent, privateKeyJwk: data.agent?.private_key || null, warning: data.warning };
   }
 
-  // ─── GET OR CREATE AGENT ────────────────────────────────────────────────────
+  // ─── GET OR CREATE ────────────────────────────────────────────────────────
   /**
-   * Find an existing agent by name or create it if it doesn't exist.
-   * Idempotent — safe to call on every startup.
-   *
+   * Find existing agent by name or create it. Safe to call on every startup.
    * @param {Object} config - Same as createAgent
    * @returns {Promise<{agent, created}>}
    */
   async getOrCreate(config) {
-    if (!config.name) throw new Error("AIVIL: getOrCreate requires config.name");
-
-    // Try to find existing agent by name
+    if (!config.name) throw new AIVILError("getOrCreate requires config.name", "MISSING_FIELD");
     try {
       const data = await this._request("GET", `/agents/name/${encodeURIComponent(config.name)}`);
-      if (data.agent) {
-        return { agent: data.agent, created: false };
-      }
-    } catch (e) {
-      // Not found — create it
-    }
-
+      if (data.agent) { this._log(`Found: ${data.agent.id}`); return { agent: data.agent, created: false }; }
+    } catch (e) { /* not found — create */ }
     const { agent } = await this.createAgent(config);
+    this._log(`Created: ${agent.id}`);
     return { agent, created: true };
   }
 
-  // ─── LIST AGENTS ────────────────────────────────────────────────────────────
-  /**
-   * List all agents registered under your API key.
-   * @returns {Promise<Array>}
-   */
+  // ─── LIST AGENTS ─────────────────────────────────────────────────────────
+  /** @returns {Promise<Array>} */
   async listAgents() {
     const data = await this._request("GET", "/agents");
     return data.agents || [];
   }
 
-  // ─── GET AGENT ──────────────────────────────────────────────────────────────
-  /**
-   * Get a specific agent by ID.
-   * @param {string} agentId
-   * @returns {Promise<Object>}
-   */
+  // ─── GET AGENT ───────────────────────────────────────────────────────────
+  /** @param {string} agentId @returns {Promise<Object>} */
   async getAgent(agentId) {
     const data = await this._request("GET", `/agents/${agentId}`);
     return data.agent;
   }
 
-  // ─── AUDIT ──────────────────────────────────────────────────────────────────
+  // ─── AUDIT ───────────────────────────────────────────────────────────────
   /**
    * Audit an agent action BEFORE executing it.
-   * Call this before EVERY action your agent takes.
    * Every decision is logged to your dashboard in real time.
    *
-   * @param {string} agentId  - Agent ID e.g. "AGT-A3F8C2E1"
-   * @param {Object} action   - The action to audit
-   * @param {string} action.type        - "purchase" | "web_search" | "send_email" | "api_call" | ...
+   * @param {string} agentId
+   * @param {Object} action
+   * @param {string} action.type        - "purchase"|"web_search"|"send_email"|"api_call"|...
    * @param {number} action.amount      - USD amount (0 if not financial)
    * @param {string} action.domain      - Target domain e.g. "openai.com"
    * @param {string} action.description - Plain English description
-   * @returns {Promise<{status, reason, flags, signature, audit_id, agent_registry, trust_score}>}
+   * @param {Object} [opts]
+   * @param {string} [opts.fallback]    - Override fallback: "escalate"|"approve"|"block"
+   * @returns {Promise<{status, reason, flags, signature, audit_id, trust_score, agent_registry}>}
    *
    * @example
-   * const verdict = await aivil.audit("AGT-XXX", {
+   * const v = await aivil.audit(agent.id, {
    *   type: "purchase", amount: 50,
    *   domain: "openai.com", description: "Buy API credits"
    * })
-   * if (verdict.status === "APPROVED") executeAction()
-   * if (verdict.status === "ESCALATE") notifyHuman(verdict.reason)
-   * if (verdict.status === "BLOCKED")  logAndStop(verdict.reason)
+   * if (v.status === "APPROVED")  proceed()
+   * if (v.status === "ESCALATE")  notifyHuman(v.reason)
+   * if (v.status === "BLOCKED")   stop(v.reason)
    */
-  async audit(agentId, action) {
-    const data = await this._request("POST", `/agents/${agentId}/audit`, { action });
-    return data.verdict;
+  async audit(agentId, action, opts = {}) {
+    const fallback = opts.fallback || this.fallback;
+    try {
+      const data = await this._request("POST", `/agents/${agentId}/audit`, { action });
+      return data.verdict;
+    } catch (e) {
+      // Fallback if AIVIL is unreachable — never crash the agent
+      if (e instanceof AIVILTimeoutError || e.code === "NETWORK_ERROR") {
+        console.warn(`[AIVIL] ⚠ Unreachable. Fallback: ${fallback.toUpperCase()}`);
+        return {
+          status:    fallback.toUpperCase(),
+          reason:    `AIVIL temporarily unreachable. Fallback: ${fallback}`,
+          flags:     ["AIVIL_FALLBACK", "SERVICE_UNREACHABLE"],
+          agent_id:  agentId,
+          timestamp: new Date().toISOString(),
+          fallback:  true,
+        };
+      }
+      throw e;
+    }
   }
 
-  // ─── GET AUDIT LOG ──────────────────────────────────────────────────────────
+  // ─── AUDIT LOG ───────────────────────────────────────────────────────────
   /**
-   * Get recent audit decisions for an agent.
    * @param {string} agentId
-   * @param {number} limit - Max results (default 50, max 200)
-   * @param {string} before - ISO timestamp cursor for pagination
+   * @param {number} [limit=50]
+   * @param {string} [before] - ISO timestamp cursor
    * @returns {Promise<Array>}
    */
   async getAuditLog(agentId, limit = 50, before = null) {
-    let path = `/agents/${agentId}/audit?limit=${limit}`;
+    let path = `/agents/${agentId}/audit?limit=${Math.min(limit, 200)}`;
     if (before) path += `&before=${encodeURIComponent(before)}`;
     const data = await this._request("GET", path);
     return data.logs || [];
   }
 
-  // ─── UPDATE POLICY ──────────────────────────────────────────────────────────
+  // ─── UPDATE POLICY ────────────────────────────────────────────────────────
   /**
-   * Update an agent's policy.
-   * Note: Can only be changed once every 24 hours.
+   * Update agent policy. Can only be changed once every 24 hours.
    * @param {string} agentId
-   * @param {Object} policy - Fields to update
-   * @param {string} reason - Why you're changing it (logged permanently)
-   * @returns {Promise<Object>}
+   * @param {Object} policy
+   * @param {string} [reason]
    */
   async updatePolicy(agentId, policy, reason = "Policy update") {
     const data = await this._request("PATCH", `/agents/${agentId}/policy`, { policy, change_reason: reason });
     return data.policy;
   }
 
-  // ─── SUSPEND ────────────────────────────────────────────────────────────────
-  /**
-   * Suspend an agent. All future audit calls return BLOCKED.
-   * @param {string} agentId
-   * @param {string} reason
-   */
+  // ─── SUSPEND ─────────────────────────────────────────────────────────────
   async suspend(agentId, reason = "Suspended by developer") {
     return this._request("POST", `/agents/${agentId}/suspend`, { reason });
   }
 
-  // ─── REACTIVATE ─────────────────────────────────────────────────────────────
-  /**
-   * Reactivate a suspended agent after human review.
-   * @param {string} agentId
-   * @param {string} reason
-   */
+  // ─── REACTIVATE ──────────────────────────────────────────────────────────
   async reactivate(agentId, reason = "Human review completed") {
     return this._request("POST", `/agents/${agentId}/reactivate`, { reason });
   }
 
-  // ─── RETIRE ─────────────────────────────────────────────────────────────────
-  /**
-   * Permanently retire an agent. Cannot be undone.
-   * Full audit history preserved forever.
-   * @param {string} agentId
-   * @param {string} reason
-   */
+  // ─── RETIRE ──────────────────────────────────────────────────────────────
   async retire(agentId, reason = "Retired by developer") {
     return this._request("POST", `/agents/${agentId}/retire`, { reason });
   }
 
-  // ─── VERIFY (PUBLIC) ────────────────────────────────────────────────────────
-  /**
-   * Publicly verify any agent — no API key needed for this.
-   * Useful for third parties to verify an agent's identity.
-   * @param {string} agentId
-   * @returns {Promise<Object>}
-   */
+  // ─── VERIFY (PUBLIC) ─────────────────────────────────────────────────────
   async verify(agentId) {
-    const fetch = globalThis.fetch || (await import("node-fetch").then(m => m.default).catch(() => null));
-    if (!fetch) throw new Error("AIVIL: fetch not available");
-    const res = await fetch(`${this.baseUrl}/verify/${agentId}`);
+    const res = await fetchWithTimeout(`${this.baseUrl}/verify/${agentId}`, {}, this.timeout);
     return res.json();
   }
 
-  // ─── STATS ──────────────────────────────────────────────────────────────────
-  /**
-   * Get usage statistics for your account.
-   * @returns {Promise<Object>}
-   */
+  // ─── STATS ───────────────────────────────────────────────────────────────
   async stats() {
     const data = await this._request("GET", "/stats");
     return data.stats;
@@ -273,7 +302,11 @@ class AIVIL {
 }
 
 // ─── EXPORTS ──────────────────────────────────────────────────────────────────
-module.exports = AIVIL;
-module.exports.AIVIL   = AIVIL;
-module.exports.default = AIVIL;
-module.exports.VERSION = AIVIL_VERSION;
+module.exports              = AIVIL;
+module.exports.AIVIL        = AIVIL;
+module.exports.default      = AIVIL;
+module.exports.VERSION      = AIVIL_VERSION;
+module.exports.AIVILError        = AIVILError;
+module.exports.AIVILTimeoutError = AIVILTimeoutError;
+module.exports.AIVILAuthError    = AIVILAuthError;
+module.exports.AIVILPlanError    = AIVILPlanError;
