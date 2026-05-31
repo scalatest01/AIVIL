@@ -230,6 +230,19 @@ app.post("/auth/reset-password", authLimiter, async (req, res) => {
   res.json({ success: true, message: "Password reset email sent" });
 });
 
+// Update password with recovery token — keeps Supabase anon key off the client
+app.post("/auth/update-password", authLimiter, async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: "token and password required" });
+  if (password.length < 8) return res.status(400).json({ error: "Password must be at least 8 characters" });
+  const { error } = await supabase.auth.admin.updateUserById(
+    (await supabase.auth.getUser(token))?.data?.user?.id,
+    { password }
+  );
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ success: true, message: "Password updated" });
+});
+
 // ─── AGENTS ───────────────────────────────────────────────────────────────────
 app.post("/agents", requireApiKey, async (req, res) => {
   const { name, role, owner, purpose, jurisdiction, policy, public_key_jwk, public_key_hex } = req.body;
