@@ -5,376 +5,275 @@
 // Open source forever · AGPL-3.0 License · github.com/scalatest01/AIVIL
 // ─────────────────────────────────────────────────────────────────────────────
 
-const AIVIL_VERSION = "2.1.2";
-const AIVIL_REGISTRY_URL = "https://aivildev.com";
+"use strict";
 
-// ─── UTILITIES ───────────────────────────────────────────────────────────────
+const AIVIL_VERSION  = "2.2.0";
+const DEFAULT_API    = "https://api.aivildev.com";
+const REGISTRY_BASE  = "https://aivildev.com";
 
-const generateId = () => {
-  try {
-    const crypto = require("crypto");
-    return "AGT-" + crypto.randomBytes(6).toString("hex").toUpperCase();
-  } catch (e) {
-    // Browser fallback — real ID assigned server-side by AIVIL API
-    return "AGT-" + Date.now().toString(36).toUpperCase().slice(-8);
-  }
-};
+// ─── SHOW STARTUP MESSAGE ─────────────────────────────────────────────────────
+if (!process.env.AIVIL_KEY && !process.env.AIVIL_API_KEY) {
+  console.log(`
+  ╔════════════════════════════════════════╗
+  ║           AIVIL v${AIVIL_VERSION}                ║
+  ║   The Civil Registry for AI Agents    ║
+  ╠════════════════════════════════════════╣
+  ║                                        ║
+  ║  ⚠  NO API KEY DETECTED               ║
+  ║                                        ║
+  ║  Try it instantly (demo mode):         ║
+  ║  const aivil = new AIVIL({            ║
+  ║    apiKey: "aivil_demo"               ║
+  ║  })                                    ║
+  ║                                        ║
+  ║  Get your free key in 30 seconds:     ║
+  ║  → https://aivildev.com/signup        ║
+  ║                                        ║
+  ╚════════════════════════════════════════╝
+`);
+}
 
-const generateKeypair = () => {
-  // Real cryptographic keypair generation using Node.js crypto
-  // EC P-256 keys — the private key is returned ONCE and never stored by AIVIL
-  try {
-    const crypto = require("crypto");
-    const { privateKey, publicKey } = crypto.generateKeyPairSync("ec", {
-      namedCurve: "P-256",
-      publicKeyEncoding:  { type: "spki",  format: "pem" },
-      privateKeyEncoding: { type: "pkcs8", format: "pem" },
-    });
-    return { publicKey, privateKey };
-  } catch (e) {
-    // Fallback for environments without Node crypto (browser)
-    // Real keys are generated server-side via the AIVIL API
-    return { publicKey: "", privateKey: "" };
-  }
-};
+// ─── MAIN CLASS ───────────────────────────────────────────────────────────────
+class AIVIL {
+  constructor(config = {}) {
+    this.apiKey  = config.apiKey
+      || process.env.AIVIL_API_KEY
+      || process.env.AIVIL_KEY
+      || "";
+    this.baseUrl = config.baseUrl || DEFAULT_API;
 
-const generateHash = (data) => {
-  try {
-    const crypto = require("crypto");
-    return "sha256:" + crypto.createHash("sha256").update(JSON.stringify(data)).digest("hex");
-  } catch (e) {
-    // Browser fallback — signatures verified server-side
-    return "sha256:client-side-placeholder";
-  }
-};
-
-const timestamp = () => new Date().toISOString();
-
-// ─── CORE: CREATE AGENT ───────────────────────────────────────────────────────
-
-/**
- * createAgent — Register a new AI agent with AIVIL
- *
- * @param {Object} config - Agent configuration
- * @param {string} config.name - Human readable name for the agent
- * @param {string} config.role - The agent's role (e.g. "Procurement Specialist")
- * @param {string} config.owner - Company or individual who owns this agent
- * @param {string} config.purpose - Plain English description of what this agent does
- * @param {string} config.jurisdiction - Legal jurisdiction (e.g. "Delaware_USA", "EU_GDPR")
- * @param {Object} config.policy - The agent's Red Line policy
- * @param {number} config.policy.spending_limit - Maximum spend per transaction (USD)
- * @param {number} config.policy.requires_human_signoff_over - Escalate above this amount
- * @param {string[]} config.policy.restricted_domains - Domains the agent cannot access
- * @param {string[]} config.policy.allowed_actions - Actions this agent is permitted to take
- * @param {number} config.policy.max_requests_per_hour - Rate limit for this agent
- *
- * @returns {Object} agent - The fully registered agent with birth certificate
- */
-const createAgent = (config) => {
-  // Validate required fields
-  const required = ["name", "role", "owner", "purpose", "jurisdiction"];
-  for (const field of required) {
-    if (!config[field]) {
-      throw new Error(`AIVIL: createAgent requires '${field}' field`);
+    if (!this.apiKey) {
+      throw new Error(
+        "\n\n  AIVIL: No API key provided.\n" +
+        "  Get your free key at: https://aivildev.com/signup\n" +
+        "  Then use: new AIVIL({ apiKey: 'aivil_your_key' })\n"
+      );
     }
   }
 
-  const { publicKey, privateKey } = generateKeypair();
-  const agentId = generateId();
-  const did = `did:aivil:${agentId}`;
-  const bornAt = timestamp();
+  // ─── HTTP HELPER ────────────────────────────────────────────────────────────
+  async _request(method, path, body) {
+    const fetch = globalThis.fetch || (await import("node-fetch").then(m => m.default).catch(() => {
+      throw new Error("AIVIL: fetch is not available. Use Node.js 18+ or install node-fetch.");
+    }));
 
-  const agent = {
-    // Identity
-    id: agentId,
-    did,
-    name: config.name,
-    role: config.role,
-    owner: config.owner,
-    purpose: config.purpose,
-    jurisdiction: config.jurisdiction,
-    status: "active",
+    const url = `${this.baseUrl}${path}`;
+    const opts = {
+      method,
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${this.apiKey}`,
+        "User-Agent":    `aivil-sdk/${AIVIL_VERSION}`,
+      },
+    };
+    if (body) opts.body = JSON.stringify(body);
 
-    // Cryptographic keys
-    publicKey,
-    privateKey, // ⚠ Store this securely — never expose in logs or APIs
+    let res;
+    try {
+      res = await fetch(url, opts);
+    } catch (e) {
+      throw new Error(`AIVIL: Cannot connect to ${this.baseUrl}. Check your internet connection. (${e.message})`);
+    }
 
-    // Birth certificate
-    birthCertificate: {
-      agentId,
-      did,
-      name: config.name,
-      role: config.role,
-      owner: config.owner,
-      purpose: config.purpose,
-      jurisdiction: config.jurisdiction,
-      bornAt,
-      issuedBy: "AIVIL Registry",
-      version: AIVIL_VERSION,
-      hash: generateHash({ agentId, bornAt, publicKey }),
-    },
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      throw new Error(`AIVIL: Server returned non-JSON response (status ${res.status})`);
+    }
 
-    // Policy (Red Line JSON)
-    policy: {
-      version: "v1.0",
-      spending_limit: config.policy?.spending_limit ?? 100,
-      requires_human_signoff_over: config.policy?.requires_human_signoff_over ?? 50,
-      restricted_domains: config.policy?.restricted_domains ?? ["*.crypto", "*.gambling"],
-      allowed_actions: config.policy?.allowed_actions ?? [],
-      max_requests_per_hour: config.policy?.max_requests_per_hour ?? 200,
-      jurisdiction: config.jurisdiction,
-      created_at: bornAt,
-    },
+    if (!res.ok) {
+      throw new Error(`AIVIL: ${data.error || `HTTP ${res.status}`}`);
+    }
 
-    // Life record — starts empty, fills over time
-    financials: {
-      spent_today: 0,
-      spent_month: 0,
-      spent_lifetime: 0,
-      budget_today: config.policy?.spending_limit ?? 100,
-      value_created: 0,
-      transactions: 0,
-    },
-
-    reputation: {
-      score: 70, // Starts at 70 — must be earned upward
-      compliance_rate: "100%",
-      approved: 0,
-      escalated: 0,
-      blocked: 0,
-      badges: ["Verified"],
-    },
-
-    work: {
-      tasks_today: 0,
-      tasks_total: 0,
-      current: "Initialising…",
-      uptime: "100%",
-    },
-
-    audit_log: [],
-
-    // Metadata
-    _aivil_version: AIVIL_VERSION,
-    _registry_url: `${AIVIL_REGISTRY_URL}/agent/${agentId}`,
-    _created_at: bornAt,
-  };
-
-  return agent;
-};
-
-// ─── CORE: AUDIT ACTION ───────────────────────────────────────────────────────
-
-/**
- * audit — Check if an agent action is allowed under its policy
- *
- * @param {Object} agent - The agent (from createAgent)
- * @param {Object} action - The action to evaluate
- * @param {string} action.type - Type of action (e.g. "purchase", "send_email")
- * @param {number} action.amount - Amount in USD (0 if not financial)
- * @param {string} action.domain - Target domain (e.g. "openai.com")
- * @param {string} action.description - Plain English description
- *
- * @returns {Object} verdict
- * @returns {string} verdict.status - "APPROVED" | "ESCALATE" | "BLOCKED"
- * @returns {string} verdict.reason - Plain English explanation
- * @returns {string[]} verdict.flags - Policy flags triggered
- * @returns {Object} verdict.signature - Cryptographic signature of the decision
- */
-const audit = (agent, action) => {
-  const flags = [];
-  let status = "APPROVED";
-  let reason = "";
-
-  // Check 1: Domain restriction
-  const isRestricted = agent.policy.restricted_domains.some(pattern => {
-    const regex = new RegExp("^" + pattern.replace(/\*/g, ".*").replace(/\./g, "\\.") + "$");
-    return regex.test(action.domain);
-  });
-
-  if (isRestricted) {
-    status = "BLOCKED";
-    flags.push("RESTRICTED_DOMAIN");
-    reason = `Domain '${action.domain}' matches a restricted pattern in this agent's policy.`;
+    return data;
   }
 
-  // Check 2: Spending limit
-  else if (action.amount > agent.policy.spending_limit) {
-    status = "BLOCKED";
-    flags.push("EXCEEDS_SPENDING_LIMIT");
-    reason = `Amount $${action.amount} exceeds the agent's spending limit of $${agent.policy.spending_limit}.`;
+  // ─── CREATE AGENT ───────────────────────────────────────────────────────────
+  /**
+   * Register a new AI agent with AIVIL.
+   * Creates a permanent verified identity with cryptographic keypair,
+   * DID document, birth certificate, and policy engine.
+   *
+   * @param {Object} config
+   * @param {string} config.name         - Agent name e.g. "Prometheus"
+   * @param {string} config.role         - Agent role e.g. "Procurement Specialist"
+   * @param {string} config.owner        - Owner name e.g. "Acme Corp"
+   * @param {string} config.purpose      - What this agent does
+   * @param {string} config.jurisdiction - "Delaware_USA" | "EU_GDPR" | "UK_GDPR" | "Singapore"
+   * @param {Object} config.policy       - Policy configuration
+   * @returns {Promise<{agent, privateKeyJwk}>}
+   */
+  async createAgent(config) {
+    const data = await this._request("POST", "/agents", config);
+    return {
+      agent:         data.agent,
+      privateKeyJwk: data.agent?.private_key || null,
+      warning:       data.warning,
+    };
   }
 
-  // Check 3: Human signoff threshold
-  else if (action.amount > agent.policy.requires_human_signoff_over) {
-    status = "ESCALATE";
-    flags.push("REQUIRES_HUMAN_SIGNOFF");
-    reason = `Amount $${action.amount} exceeds the human signoff threshold of $${agent.policy.requires_human_signoff_over}. Human approval required.`;
+  // ─── GET OR CREATE AGENT ────────────────────────────────────────────────────
+  /**
+   * Find an existing agent by name or create it if it doesn't exist.
+   * Idempotent — safe to call on every startup.
+   *
+   * @param {Object} config - Same as createAgent
+   * @returns {Promise<{agent, created}>}
+   */
+  async getOrCreate(config) {
+    if (!config.name) throw new Error("AIVIL: getOrCreate requires config.name");
+
+    // Try to find existing agent by name
+    try {
+      const data = await this._request("GET", `/agents/name/${encodeURIComponent(config.name)}`);
+      if (data.agent) {
+        return { agent: data.agent, created: false };
+      }
+    } catch (e) {
+      // Not found — create it
+    }
+
+    const { agent } = await this.createAgent(config);
+    return { agent, created: true };
   }
 
-  // Check 4: Action allowlist (if defined)
-  else if (
-    agent.policy.allowed_actions.length > 0 &&
-    !agent.policy.allowed_actions.includes(action.type)
-  ) {
-    status = "BLOCKED";
-    flags.push("ACTION_NOT_PERMITTED");
-    reason = `Action type '${action.type}' is not in this agent's allowed actions list.`;
+  // ─── LIST AGENTS ────────────────────────────────────────────────────────────
+  /**
+   * List all agents registered under your API key.
+   * @returns {Promise<Array>}
+   */
+  async listAgents() {
+    const data = await this._request("GET", "/agents");
+    return data.agents || [];
   }
 
-  // All checks passed
-  else {
-    reason = `All policy checks passed. Action is within limits and permitted for this agent.`;
+  // ─── GET AGENT ──────────────────────────────────────────────────────────────
+  /**
+   * Get a specific agent by ID.
+   * @param {string} agentId
+   * @returns {Promise<Object>}
+   */
+  async getAgent(agentId) {
+    const data = await this._request("GET", `/agents/${agentId}`);
+    return data.agent;
   }
 
-  const verdict = {
-    status,
-    reason,
-    flags,
-    action,
-    agent_id: agent.id,
-    policy_version: agent.policy.version,
-    timestamp: timestamp(),
-    signature: generateHash({ status, action, agent_id: agent.id }),
-  };
-
-  // Append to agent's audit log
-  agent.audit_log.push(verdict);
-
-  // Update reputation stats
-  if (status === "APPROVED") agent.reputation.approved++;
-  if (status === "ESCALATE") agent.reputation.escalated++;
-  if (status === "BLOCKED") {
-    agent.reputation.blocked++;
-    agent.reputation.score = Math.max(0, agent.reputation.score - 2);
+  // ─── AUDIT ──────────────────────────────────────────────────────────────────
+  /**
+   * Audit an agent action BEFORE executing it.
+   * Call this before EVERY action your agent takes.
+   * Every decision is logged to your dashboard in real time.
+   *
+   * @param {string} agentId  - Agent ID e.g. "AGT-A3F8C2E1"
+   * @param {Object} action   - The action to audit
+   * @param {string} action.type        - "purchase" | "web_search" | "send_email" | "api_call" | ...
+   * @param {number} action.amount      - USD amount (0 if not financial)
+   * @param {string} action.domain      - Target domain e.g. "openai.com"
+   * @param {string} action.description - Plain English description
+   * @returns {Promise<{status, reason, flags, signature, audit_id, agent_registry, trust_score}>}
+   *
+   * @example
+   * const verdict = await aivil.audit("AGT-XXX", {
+   *   type: "purchase", amount: 50,
+   *   domain: "openai.com", description: "Buy API credits"
+   * })
+   * if (verdict.status === "APPROVED") executeAction()
+   * if (verdict.status === "ESCALATE") notifyHuman(verdict.reason)
+   * if (verdict.status === "BLOCKED")  logAndStop(verdict.reason)
+   */
+  async audit(agentId, action) {
+    const data = await this._request("POST", `/agents/${agentId}/audit`, { action });
+    return data.verdict;
   }
 
-  // Update financials if approved
-  if (status === "APPROVED" && action.amount > 0) {
-    agent.financials.spent_today += action.amount;
-    agent.financials.spent_month += action.amount;
-    agent.financials.spent_lifetime += action.amount;
-    agent.financials.transactions++;
+  // ─── GET AUDIT LOG ──────────────────────────────────────────────────────────
+  /**
+   * Get recent audit decisions for an agent.
+   * @param {string} agentId
+   * @param {number} limit - Max results (default 50, max 200)
+   * @param {string} before - ISO timestamp cursor for pagination
+   * @returns {Promise<Array>}
+   */
+  async getAuditLog(agentId, limit = 50, before = null) {
+    let path = `/agents/${agentId}/audit?limit=${limit}`;
+    if (before) path += `&before=${encodeURIComponent(before)}`;
+    const data = await this._request("GET", path);
+    return data.logs || [];
   }
 
-  return verdict;
-};
+  // ─── UPDATE POLICY ──────────────────────────────────────────────────────────
+  /**
+   * Update an agent's policy.
+   * Note: Can only be changed once every 24 hours.
+   * @param {string} agentId
+   * @param {Object} policy - Fields to update
+   * @param {string} reason - Why you're changing it (logged permanently)
+   * @returns {Promise<Object>}
+   */
+  async updatePolicy(agentId, policy, reason = "Policy update") {
+    const data = await this._request("PATCH", `/agents/${agentId}/policy`, { policy, change_reason: reason });
+    return data.policy;
+  }
 
-// ─── CORE: VERIFY AGENT ───────────────────────────────────────────────────────
+  // ─── SUSPEND ────────────────────────────────────────────────────────────────
+  /**
+   * Suspend an agent. All future audit calls return BLOCKED.
+   * @param {string} agentId
+   * @param {string} reason
+   */
+  async suspend(agentId, reason = "Suspended by developer") {
+    return this._request("POST", `/agents/${agentId}/suspend`, { reason });
+  }
 
-/**
- * verify — Verify an agent's identity and current standing
- *
- * @param {Object} agent - The agent to verify
- * @returns {Object} verification result
- */
-const verify = (agent) => {
-  const issues = [];
+  // ─── REACTIVATE ─────────────────────────────────────────────────────────────
+  /**
+   * Reactivate a suspended agent after human review.
+   * @param {string} agentId
+   * @param {string} reason
+   */
+  async reactivate(agentId, reason = "Human review completed") {
+    return this._request("POST", `/agents/${agentId}/reactivate`, { reason });
+  }
 
-  if (!agent.id) issues.push("Missing agent ID");
-  if (!agent.did) issues.push("Missing DID");
-  if (!agent.publicKey) issues.push("Missing public key");
-  if (!agent.birthCertificate) issues.push("Missing birth certificate");
-  if (!agent.policy) issues.push("Missing policy");
-  if (agent.status !== "active") issues.push(`Agent status is '${agent.status}'`);
+  // ─── RETIRE ─────────────────────────────────────────────────────────────────
+  /**
+   * Permanently retire an agent. Cannot be undone.
+   * Full audit history preserved forever.
+   * @param {string} agentId
+   * @param {string} reason
+   */
+  async retire(agentId, reason = "Retired by developer") {
+    return this._request("POST", `/agents/${agentId}/retire`, { reason });
+  }
 
-  return {
-    verified: issues.length === 0,
-    agent_id: agent.id,
-    did: agent.did,
-    status: agent.status,
-    trust_score: agent.reputation.score,
-    issues,
-    verified_at: timestamp(),
-    registry_url: agent._registry_url,
-  };
-};
+  // ─── VERIFY (PUBLIC) ────────────────────────────────────────────────────────
+  /**
+   * Publicly verify any agent — no API key needed for this.
+   * Useful for third parties to verify an agent's identity.
+   * @param {string} agentId
+   * @returns {Promise<Object>}
+   */
+  async verify(agentId) {
+    const fetch = globalThis.fetch || (await import("node-fetch").then(m => m.default).catch(() => null));
+    if (!fetch) throw new Error("AIVIL: fetch not available");
+    const res = await fetch(`${this.baseUrl}/verify/${agentId}`);
+    return res.json();
+  }
 
-// ─── CORE: GET LIFE RECORD ────────────────────────────────────────────────────
-
-/**
- * getLifeRecord — Get the complete life record of an agent
- *
- * @param {Object} agent - The agent
- * @returns {Object} Complete life record
- */
-const getLifeRecord = (agent) => ({
-  identity: {
-    id: agent.id,
-    did: agent.did,
-    name: agent.name,
-    role: agent.role,
-    owner: agent.owner,
-    purpose: agent.purpose,
-    jurisdiction: agent.jurisdiction,
-    status: agent.status,
-    born_at: agent._created_at,
-  },
-  birth_certificate: agent.birthCertificate,
-  policy: agent.policy,
-  financials: agent.financials,
-  reputation: agent.reputation,
-  work: agent.work,
-  audit_summary: {
-    total_decisions: agent.audit_log.length,
-    approved: agent.reputation.approved,
-    escalated: agent.reputation.escalated,
-    blocked: agent.reputation.blocked,
-    last_decision: agent.audit_log[agent.audit_log.length - 1] ?? null,
-  },
-  registry_url: agent._registry_url,
-  aivil_version: agent._aivil_version,
-});
-
-// ─── CORE: SUSPEND / RETIRE ───────────────────────────────────────────────────
-
-/**
- * suspend — Temporarily suspend an agent
- * @param {Object} agent - The agent to suspend
- * @param {string} reason - Why the agent is being suspended
- */
-const suspend = (agent, reason) => {
-  agent.status = "suspended";
-  agent.audit_log.push({
-    status: "SUSPENDED",
-    reason,
-    timestamp: timestamp(),
-    signature: generateHash({ status: "SUSPENDED", agent_id: agent.id }),
-  });
-  return agent;
-};
-
-/**
- * retire — Permanently retire an agent (preserves full history)
- * @param {Object} agent - The agent to retire
- * @param {string} reason - Why the agent is being retired
- */
-const retire = (agent, reason) => {
-  agent.status = "retired";
-  agent.retired_at = timestamp();
-  agent.retirement_reason = reason;
-  agent.final_trust_score = agent.reputation.score;
-  agent.audit_log.push({
-    status: "RETIRED",
-    reason,
-    timestamp: agent.retired_at,
-    final_record: getLifeRecord(agent),
-    signature: generateHash({ status: "RETIRED", agent_id: agent.id }),
-  });
-  return agent;
-};
+  // ─── STATS ──────────────────────────────────────────────────────────────────
+  /**
+   * Get usage statistics for your account.
+   * @returns {Promise<Object>}
+   */
+  async stats() {
+    const data = await this._request("GET", "/stats");
+    return data.stats;
+  }
+}
 
 // ─── EXPORTS ──────────────────────────────────────────────────────────────────
-
-module.exports = {
-  createAgent,
-  audit,
-  verify,
-  getLifeRecord,
-  suspend,
-  retire,
-  VERSION: AIVIL_VERSION,
-};
-
-// ES Module support
-module.exports.default = module.exports;
+module.exports = AIVIL;
+module.exports.AIVIL   = AIVIL;
+module.exports.default = AIVIL;
+module.exports.VERSION = AIVIL_VERSION;
