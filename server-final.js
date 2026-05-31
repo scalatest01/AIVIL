@@ -38,6 +38,7 @@ app.use(express.json({ limit: "256kb" }));
 const allowedOrigins = [
   "https://aivildev.com",
   "https://www.aivildev.com",
+  "https://aivil-lake.vercel.app",
   ...(process.env.NODE_ENV !== "production"
     ? ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173"]
     : []),
