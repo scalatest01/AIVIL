@@ -608,6 +608,7 @@ function AgentsScreen({ agents, apiKey, onRefresh, setActive }) {
   const [selected, setSelected] = useState(null);
   const [actionLoading, setActionLoading] = useState("");
   const [editingPolicy, setEditingPolicy] = useState(null);
+  const [confirmRetire, setConfirmRetire] = useState(null); // agent object to retire
 
   const handleCreated = (agent, pk) => {
     setNewAgent(agent); setPrivateKey(pk); setCreating(false); onRefresh();
@@ -675,7 +676,7 @@ function AgentsScreen({ agents, apiKey, onRefresh, setActive }) {
                     <button onClick={()=>handleAction(agent.id,"reactivate","Manual reactivation after review")} disabled={actionLoading===agent.id+"reactivate"} style={{ background:"rgba(0,214,143,0.1)", border:`1px solid ${C.green}44`, borderRadius:4, color:C.green, padding:"6px 12px", cursor:"pointer", fontSize:9, letterSpacing:1, fontFamily:"'JetBrains Mono',monospace" }}>REACTIVATE</button>
                   )}
                   {agent.status!=="retired" && (
-                    <button onClick={()=>handleAction(agent.id,"retire","Retired by developer")} style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:4, color:C.textDim, padding:"6px 12px", cursor:"pointer", fontSize:9, letterSpacing:1, fontFamily:"'JetBrains Mono',monospace" }}>RETIRE</button>
+                    <button onClick={()=>setConfirmRetire(agent)} style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:4, color:C.textDim, padding:"6px 12px", cursor:"pointer", fontSize:9, letterSpacing:1, fontFamily:"'JetBrains Mono',monospace" }}>RETIRE</button>
                   )}
                   <button onClick={()=>setEditingPolicy(agent)} style={{ background:`${C.gold}11`, border:`1px solid ${C.gold}44`, borderRadius:4, color:C.gold, padding:"6px 12px", cursor:"pointer", fontSize:9, letterSpacing:1, fontFamily:"'JetBrains Mono',monospace" }}>EDIT POLICY</button>
                 </div>
@@ -710,6 +711,43 @@ function AgentsScreen({ agents, apiKey, onRefresh, setActive }) {
           onClose={()=>setEditingPolicy(null)}
           onSaved={()=>{ onRefresh(); setEditingPolicy(null); }}
         />
+      )}
+
+      {/* Retire confirmation modal */}
+      {confirmRetire && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div style={{ background:C.card, border:`1px solid ${C.red}44`, borderRadius:10, padding:28, width:"100%", maxWidth:440 }}>
+            <div style={{ fontSize:28, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:22, color:C.red, marginBottom:8 }}>Retire Agent?</div>
+            <div style={{ fontSize:13, color:C.textMid, lineHeight:1.8, marginBottom:20 }}>
+              You are about to permanently retire <span style={{ color:C.text, fontWeight:700 }}>{confirmRetire.name}</span> ({confirmRetire.id}).
+            </div>
+            <div style={{ background:`${C.red}11`, border:`1px solid ${C.red}33`, borderRadius:6, padding:14, marginBottom:24 }}>
+              <div style={{ fontSize:11, color:C.red, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1, marginBottom:8 }}>⚠ THIS CANNOT BE UNDONE</div>
+              <div style={{ fontSize:12, color:C.textMid, lineHeight:1.8 }}>
+                • The agent will be permanently deactivated<br/>
+                • All future audit calls will be BLOCKED<br/>
+                • The agent cannot be reactivated after retiring<br/>
+                • Audit history is preserved forever
+              </div>
+            </div>
+            <div style={{ display:"flex", gap:10 }}>
+              <button
+                onClick={async () => {
+                  await handleAction(confirmRetire.id, "retire", "Retired by developer");
+                  setConfirmRetire(null);
+                }}
+                style={{ flex:1, background:C.red, border:"none", borderRadius:4, color:"white", padding:"10px", cursor:"pointer", fontSize:10, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700 }}>
+                YES, RETIRE PERMANENTLY
+              </button>
+              <button
+                onClick={()=>setConfirmRetire(null)}
+                style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:4, color:C.textDim, padding:"10px 16px", cursor:"pointer", fontSize:10, fontFamily:"'JetBrains Mono',monospace" }}>
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
