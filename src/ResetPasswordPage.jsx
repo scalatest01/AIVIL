@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 
 const API = "https://api.aivildev.com";
-const SUPABASE_URL = "https://kecofixwfajxdoyvvnlj.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlY29maXh3ZmFqeGRveXZ2bmxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4Mjg4NzksImV4cCI6MjA5NDQwNDg3OX0.Kld2q7XT2oPE9jhybiT7g0Gw8AZ74Pb-dSDK-ghAWfA";
 
 const C = {
   bg:"#04060c", card:"#080c14", border:"#151f30",
@@ -41,21 +39,17 @@ export default function ResetPasswordPage() {
     setLoading(true); setError("");
 
     try {
-      // Use Supabase directly to update password with the recovery token
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ password }),
+      // Route through AIVIL API — no client-side Supabase keys needed
+      const res = await fetch(`${API}/auth/update-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || data.error_description || "Failed to reset password");
+        setError(data.error || "Failed to reset password");
         return;
       }
 
