@@ -1,193 +1,109 @@
-# 🛡️ Policy Engine
+# AIVIL — AI Vital Identity Layer
 
-> **AI agents are like kids — they work hard but don't know right from wrong. Policy Engine is the parent that sets the rules, controls the spending, and makes sure they don't do anything they shouldn't.**
+> The civil registry for artificial intelligence.
 
----
+Give every AI agent a **verified identity**, **spending controls**, and a **tamper-proof audit trail**.
 
-## The Problem
+[![npm version](https://img.shields.io/npm/v/aivil)](https://npmjs.com/package/aivil)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/scalatest01/AIVIL/blob/main/LICENSE)
 
-You've built an AI agent. It's smart, fast, and works 24/7.
- 
-But it has no idea that:
-- It shouldn't spend $2,000 on a software subscription without asking
-- It shouldn't touch a crypto exchange API
-- It shouldn't delete customer data without human approval
-- It needs to follow different rules in Europe vs the US
-
-Right now, most developers handle this with custom code hacked together for each project. There's no standard. No shared tooling. Every team reinvents the same safety layer from scratch.
-
-**Policy Engine is that standard.**
-
----
-
-## How It Works
-
-Think of your system like a family:
-
-- 👨‍💼 **The Developer** — the father. Goes to work, builds things, makes money.
-- 🤖 **The Agent** — the kid. Works hard but doesn't know right from wrong.
-- 🛡️ **Policy Engine** — the mother. Sets the rules, watches what the kids do, and steps in when they're about to do something they shouldn't.
-
-Every time an agent wants to take an action, it checks with Policy Engine first.
-
-Policy Engine looks at the rules and returns one of three answers:
-
-| Verdict | Meaning |
-|---|---|
-| ✅ **APPROVED** | Go ahead. Everything checks out. |
-| ⚠️ **ESCALATE** | Stop. A human needs to review this first. |
-| ❌ **BLOCKED** | Absolutely not. This violates the rules. |
-
----
-
-## The Policy File
-
-Every agent gets a **Red-Line JSON** — a simple file that defines exactly what it's allowed to do:
-
-```json
-{
-  "role": "Procurement_Agent",
-  "spending_limit": 100.00,
-  "restricted_domains": ["*.crypto", "*.gambling"],
-  "requires_human_signoff_over": 50.00,
-  "legal_jurisdiction": "Delaware_USA",
-  "allowed_actions": ["search_vendor", "request_quote", "submit_po"],
-  "max_requests_per_hour": 200
-}
-```
-
-That's it. No complex configuration. No infrastructure to manage. Just a JSON file that your agent reads before it acts.
-
----
-
-## Real Examples
-
-**Agent wants to buy $30 of API credits**
-```
-✅ APPROVED — under spending limit, domain not restricted, action allowed
-```
-
-**Agent wants to buy an $80 software license**
-```
-⚠️ ESCALATE — over the $50 human signoff threshold. Waiting for approval.
-```
-
-**Agent tries to call a crypto exchange API**
-```
-❌ BLOCKED — *.crypto is a restricted domain. Action never executes.
-```
-
-**Agent tries to delete customer records**
-```
-⚠️ ESCALATE — data deletion requires human signoff regardless of amount.
-```
-
----
-
-## Why This Matters Now
-
-AI agents are being deployed by thousands of companies today. Most have **zero standardized controls** on what those agents are allowed to do.
-
-This is the same moment as the early internet — everyone building fast, nobody thinking about what happens when it goes wrong.
-
-Policy Engine is the safety layer the agent ecosystem needs before it can be trusted with real responsibility.
-
----
-
-## Live Demo
-
-Try the interactive Policy Engine — build a policy, fire test actions, and watch the AI Auditor make real decisions:
-
-👉 **[Try the Demo →](https://aivil-lake.vercel.app/)**
-
----
-
-## Getting Started
+## Install
 
 ```bash
-npm install policy-engine
+npm install aivil
 ```
 
-```javascript
-import { audit } from 'policy-engine'
+## Quick Start
 
-const policy = {
-  role: "Procurement_Agent",
-  spending_limit: 100.00,
-  restricted_domains: ["*.crypto", "*.gambling"],
-  requires_human_signoff_over: 50.00,
-}
+```js
+const AIVIL = require('aivil')
 
-const action = {
+const aivil = new AIVIL({ apiKey: process.env.AIVIL_API_KEY })
+
+// Get or create agent — safe to call on every startup
+const { agent } = await aivil.getOrCreate({
+  name: "Prometheus",
+  role: "Procurement Specialist",
+  owner: "Acme Corp",
+  purpose: "Handle vendor search and purchasing",
+  jurisdiction: "Delaware_USA",
+  policy: {
+    spending_limit: 100,
+    requires_human_signoff_over: 50,
+    allowed_topics: ["vendors", "pricing", "procurement"],
+    blocked_topics: ["gambling", "adult", "illegal"],
+  }
+})
+
+// Audit BEFORE every action
+const verdict = await aivil.audit(agent.id, {
   type: "purchase",
   amount: 30,
   domain: "openai.com",
-  description: "Buy API credits"
-}
+  description: "Buy API credits for data processing"
+})
 
-const verdict = await audit(policy, action)
-// { status: "APPROVED", reasoning: "...", flags: [] }
+if (verdict.status === "APPROVED")  executeAction()
+if (verdict.status === "ESCALATE")  notifyHuman(verdict.reason)
+if (verdict.status === "BLOCKED")   logAndStop(verdict.reason)
 ```
 
----
+## Features
 
-## Roadmap
+- **Verified identity** — Every agent gets a real EC P-256 keypair + W3C DID
+- **Policy engine** — Spending limits, blocked domains, allowed topics
+- **Audit trail** — Every decision logged, HMAC-signed, tamper-proof
+- **Live dashboard** — See every decision in real time at aivildev.com/app
+- **MCP support** — Zero-code Claude integration via mcp.aivildev.com/mcp
+- **Rogue detection** — Auto-suspend agents that violate policy repeatedly
+- **Fallback mode** — Never crashes your agent if AIVIL is unreachable
 
-- [x] Policy definition standard (Red-Line JSON)
-- [x] AI-powered Auditor Agent
-- [x] Interactive demo
-- [ ] npm package
-- [ ] Persistent audit log
-- [ ] Agent Identity Registry
-- [ ] Budget ledger (cumulative spend tracking)
-- [ ] Human escalation webhooks
-- [ ] Multi-agent trust handshake
+## Configuration
 
----
+```js
+const aivil = new AIVIL({
+  apiKey:   process.env.AIVIL_API_KEY,   // required
+  timeout:  8000,                         // ms (default: 8000)
+  retries:  2,                            // retry attempts (default: 2)
+  fallback: "escalate",                   // if unreachable: "escalate"|"approve"|"block"
+  debug:    false,                        // log all requests
+})
+```
 
-## Philosophy
+## Error Handling
 
-Policy Engine is and will always be **open source**.
+```js
+const { AIVILAuthError, AIVILPlanError, AIVILTimeoutError } = require('aivil')
 
-Agent identity and spending controls are too important to be owned by one company. This should be a community standard — like HTTP, like OAuth — not a product.
+try {
+  const verdict = await aivil.audit(agent.id, action)
+} catch (e) {
+  if (e instanceof AIVILAuthError)    console.error("Invalid API key")
+  if (e instanceof AIVILPlanError)    console.error("Plan limit —", e.upgradeUrl)
+  if (e instanceof AIVILTimeoutError) console.error("Request timed out")
+}
+```
 
-If you're building AI agents and have opinions about how this should work, open an issue. This gets better when more people who feel the problem help shape the solution.
+## MCP Server (Claude)
 
----
+Add to Claude Desktop config — zero code required:
 
-## Contributing
+```json
+{
+  "mcpServers": {
+    "aivil": { "url": "https://mcp.aivildev.com/mcp" }
+  }
+}
+```
 
-This project is in early development. The best contribution right now is feedback.
+## Links
 
-- Are you building agents? **[Tell us what controls you need →](#)**
-- Found a bug? **Open an issue**
-- Want to contribute code? **PRs welcome — read CONTRIBUTING.md first**
-
----
-
-## Documentation
-Full docs at [aivildev.com/docs](https://aivildev.com/docs)
+- **Docs:** https://aivildev.com/docs
+- **Dashboard:** https://aivildev.com/app
+- **Sign up free:** https://aivildev.com/signup
+- **GitHub:** https://github.com/scalatest01/AIVIL
 
 ## License
 
-AIVIL is open source under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).
-
-**What this means:**
-- ✅ Free to use personally and internally
-- ✅ Free to build AI agents with AIVIL
-- ✅ Free to modify and contribute back
-- ⚠️ If you run AIVIL as a hosted service, you must open source your changes
-
-**Commercial License**
-
-If you need to use AIVIL in a proprietary product or hosted service
-without the AGPL obligations — a commercial license is available.
-
-Contact: ihimanshu882@gmail.com
-
----
-
-*AIVIL — Every agent. Verified. Accountable. Alive.*
-*[aivildev.com](https://aivildev.com)*
-
-*Built for---who are building the machine economy — and want to make sure it doesn't go sideways.*
+AGPL-3.0 — Free to use. If you run it as a hosted service, open source your changes.  
+Commercial license available: ihimanshu882@gmail.com
