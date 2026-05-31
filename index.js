@@ -7,7 +7,7 @@
 
 "use strict";
 
-const AIVIL_VERSION  = "2.2.0";
+const AIVIL_VERSION  = "2.1.4";
 const DEFAULT_API    = "https://api.aivildev.com";
 const REGISTRY_BASE  = "https://aivildev.com";
 
