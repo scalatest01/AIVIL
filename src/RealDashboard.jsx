@@ -1216,7 +1216,11 @@ export default function RealDashboard() {
     setAuditLogs(DEMO_LOGS);
   };
 
-  useEffect(() => { if(isDemoMode){setApiKey(DEMO_KEY);setAgents(DEMO_AGENTS);setAuditLogs(DEMO_LOGS);} else if(apiKey) loadData(apiKey); }, []);
+  useEffect(() => {
+  const demo = sessionStorage.getItem("aivil_demo") === "true";
+  if(demo){ setIsDemoMode(true); setApiKey(DEMO_KEY); setAgents(DEMO_AGENTS); setAuditLogs(DEMO_LOGS); }
+  else if(apiKey) loadData(apiKey);
+}, []);
 
   const isDemo = apiKey === DEMO_KEY || isDemoMode;
   if(!apiKey && !isDemoMode) return (
