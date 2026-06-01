@@ -1247,7 +1247,7 @@ export default function RealDashboard() {
           </button>
           <div style={{ background:C.goldDim, border:`1px solid ${C.gold}22`, borderRadius:5, padding:12, marginBottom:14 }}>
             <div style={{ fontSize:10, color:C.gold, fontFamily:"'JetBrains Mono',monospace", lineHeight:1.8 }}>
-              Don't have an API key? Sign up at{" "}<a href="/signup" style={{ color:C.gold }}>aivil-lake.vercel.app/signup</a>{" "}to get one instantly.
+              Don't have an API key? Sign up at{" "}<a href="/signup" style={{ color:C.gold }}>aivildev.com/signup</a>{" "}to get one instantly.
             </div>
           </div>
           <div style={{ textAlign:"center", margin:"8px 0 12px" }}>
