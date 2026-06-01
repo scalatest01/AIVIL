@@ -1267,7 +1267,7 @@ export default function RealDashboard() {
   return (
     <>
     {isDemo && (
-      <div style={{ background:"rgba(201,168,76,0.1)", borderBottom:"1px solid rgba(201,168,76,0.3)", padding:"10px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:200 }}>
+      <div style={{ background:"#0d1220", borderBottom:"1px solid rgba(201,168,76,0.3)", padding:"10px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:200 }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <span style={{ fontSize:9, background:"#c9a84c", color:"#04060c", padding:"2px 8px", borderRadius:3, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1, fontWeight:700 }}>DEMO</span>
           <span style={{ fontSize:11, color:"#c9a84c", fontFamily:"'JetBrains Mono',monospace" }}>Viewing demo data — not real agents</span>
