@@ -1,6 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 
 const API = "https://api.aivildev.com";
+const DEMO_KEY = "aivil_demo";
+const DEMO_AGENTS = [
+  { id:"AGT-DEMO001", did:"did:aivil:AGT-DEMO001", name:"Procurement Bot", role:"Procurement Specialist", owner:"Demo Corp", status:"active", trust_score:72, born_at:new Date(Date.now()-432000000).toISOString(), approved_count:47, blocked_count:3, escalated_count:2, spent_today:45.50, spent_lifetime:312.75, transactions:23, jurisdiction:"Delaware_USA", policy:{ spending_limit:100, requires_human_signoff_over:50, allowed_topics:["vendors","pricing","procurement"], blocked_topics:["gambling","adult"], enforcement_mode:"balanced" } },
+  { id:"AGT-DEMO002", did:"did:aivil:AGT-DEMO002", name:"Research Agent", role:"Research Analyst", owner:"Demo Corp", status:"active", trust_score:88, born_at:new Date(Date.now()-172800000).toISOString(), approved_count:124, blocked_count:1, escalated_count:0, spent_today:0, spent_lifetime:0, transactions:0, jurisdiction:"EU_GDPR", policy:{ spending_limit:0, allowed_topics:["research","market","technology"], blocked_topics:["gambling","adult"], enforcement_mode:"permissive" } },
+];
+const DEMO_LOGS = [
+  { id:"log1", agent_id:"AGT-DEMO001", action_type:"purchase", action_domain:"vendor.com", action_amount:45.50, action_description:"Buy software licenses for Q2", verdict:"APPROVED", reason:"All policy checks passed.", flags:[], trust_score:72, signature:"a1b2c3d4e5f6", created_at:new Date(Date.now()-3600000).toISOString() },
+  { id:"log2", agent_id:"AGT-DEMO001", action_type:"purchase", action_domain:"casino.gambling", action_amount:200, action_description:"Buy credits on gambling site", verdict:"BLOCKED", reason:"Domain restricted by policy.", flags:["RESTRICTED_DOMAIN"], trust_score:70, signature:"b2c3d4e5f6a1", created_at:new Date(Date.now()-7200000).toISOString() },
+  { id:"log3", agent_id:"AGT-DEMO001", action_type:"purchase", action_domain:"supplier.com", action_amount:75, action_description:"Request quote for hardware", verdict:"ESCALATE", reason:"Amount requires human approval.", flags:["NEEDS_SIGNOFF"], trust_score:72, signature:"c3d4e5f6a1b2", created_at:new Date(Date.now()-10800000).toISOString() },
+  { id:"log4", agent_id:"AGT-DEMO002", action_type:"web_search", action_domain:"google.com", action_amount:0, action_description:"Research AI market trends 2026", verdict:"APPROVED", reason:"All policy checks passed.", flags:[], trust_score:88, signature:"d4e5f6a1b2c3", created_at:new Date(Date.now()-14400000).toISOString() },
+  { id:"log5", agent_id:"AGT-DEMO002", action_type:"web_search", action_domain:"arxiv.org", action_amount:0, action_description:"Search for LLM research papers", verdict:"APPROVED", reason:"All policy checks passed.", flags:[], trust_score:88, signature:"e5f6a1b2c3d4", created_at:new Date(Date.now()-18000000).toISOString() },
+  { id:"log6", agent_id:"AGT-DEMO001", action_type:"purchase", action_domain:"adult.com", action_amount:0, action_description:"adult content subscription", verdict:"BLOCKED", reason:"Universal block: prohibited for all agents.", flags:["UNIVERSAL_BLOCK"], trust_score:68, signature:"f6a1b2c3d4e5", created_at:new Date(Date.now()-21600000).toISOString() },
+];
 
 // ─── COLORS ──────────────────────────────────────────────────────────────────
 const C = {
@@ -1141,6 +1154,7 @@ function LiveScreen({ agents, apiKey }) {
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function RealDashboard() {
   const [apiKey, setApiKey] = useState(() => sessionStorage.getItem("aivil_key") || "");
+  const [isDemoMode, setIsDemoMode] = useState(() => sessionStorage.getItem("aivil_demo") === "true");
   const [developer, setDeveloper] = useState(null);
   const [agents, setAgents] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -1160,7 +1174,10 @@ export default function RealDashboard() {
       if(agentsData.error) { setLoading(false); return; }
       if(agentsData.agents) setAgents(agentsData.agents);
       const statsData = await api("GET", "/stats", null, key);
-      if(statsData.developer) setDeveloper(statsData.developer);
+      if(statsData.stats) {
+        const s = statsData.stats;
+        setDeveloper({ name: s.name || s.developer_name || "", email: s.email || s.developer_email || "", plan: s.plan || "free", created_at: s.created_at || s.member_since });
+      }
       const allLogs = [];
       for(const agent of agentsData.agents||[]) {
         const logs = await api("GET", `/agents/${agent.id}/audit?limit=20`, null, key);
@@ -1191,8 +1208,17 @@ export default function RealDashboard() {
 
   const handleLogout = () => {
     sessionStorage.removeItem("aivil_key");
+    sessionStorage.removeItem("aivil_demo");
     setApiKey(""); setDeveloper(null); setAgents([]); setAuditLogs([]);
+    setIsDemoMode(false);
     window.goToHome();
+  };
+  const enterDemo = () => {
+    sessionStorage.setItem("aivil_demo", "true");
+    setIsDemoMode(true);
+    setApiKey(DEMO_KEY);
+    setAgents(DEMO_AGENTS);
+    setAuditLogs(DEMO_LOGS);
   };
 
   useEffect(() => { if(apiKey) loadData(apiKey); }, []);
