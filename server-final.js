@@ -621,6 +621,21 @@ app.get("/verify/:agentId", async (req, res) => {
   });
 });
 
+// ─── ME ──────────────────────────────────────────────────────────────────────
+app.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const { data: dev, error } = await supabase
+      .from("developers")
+      .select("name, email, plan, created_at")
+      .eq("id", req.developer.id)
+      .single();
+    if (error) return res.status(404).json({ error: "Developer not found" });
+    res.json({ success: true, developer: dev });
+  } catch (e) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // ─── STATS ────────────────────────────────────────────────────────────────────
 app.get("/stats", requireApiKey, async (req, res) => {
   const { data: agents, error } = await supabase.from("agents").select("status, trust_score, spent_lifetime, transactions").eq("developer_id", req.developerId);
