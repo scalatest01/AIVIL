@@ -386,7 +386,6 @@ function Sidebar({ active, setActive, rogueCount }) {
           SETTINGS & SIGN OUT
         </button>
       </div>
-      </div>
     </div>
   );
 }
@@ -455,8 +454,6 @@ function OverviewScreen({ agents, auditLogs, developer, setActive }) {
             </div>
           ))}
         </div>
-      </div>
-      </div>
     </div>
   );
 }
@@ -628,7 +625,6 @@ function PolicyEditor({ agent, apiKey, onClose, onSaved }) {
           </button>
         </div>
 
-      </div>
       </div>
     </div>
   );
@@ -820,7 +816,6 @@ function AuditScreen({ auditLogs }) {
           </div>
         ))}
       </div>
-      </div>
     </div>
   );
 }
@@ -886,7 +881,6 @@ function SecurityScreen({ agents, auditLogs, apiKey, onRefresh }) {
         {agents.length===0 && (
           <div style={{ padding:"30px", textAlign:"center", fontSize:11, color:C.textDim, fontFamily:"'JetBrains Mono',monospace" }}>No agents registered yet</div>
         )}
-      </div>
       </div>
     </div>
   );
@@ -986,8 +980,6 @@ function SettingsScreen({ developer, apiKey, onLogout }) {
             </div>
           )}
         </div>
-      </div>
-      </div>
     </div>
   );
 }
@@ -1172,7 +1164,6 @@ function LiveScreen({ agents, apiKey }) {
           );
         })}
       </div>
-      </div>
     </div>
   );
 }
@@ -1307,7 +1298,6 @@ export default function RealDashboard() {
           </div>
         </div>
       )}
-      <div style={{ display:"flex", flex:1 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0;}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#04060c}::-webkit-scrollbar-thumb{background:#151f30;border-radius:2px}button{font-family:inherit}input,textarea,select{font-family:inherit}input::placeholder,textarea::placeholder{color:#2a3a5a}`}</style>
 
       <Sidebar active={active} setActive={setActive} rogueCount={rogueCount}/>
@@ -1326,7 +1316,6 @@ export default function RealDashboard() {
             {active==="settings" && <SettingsScreen developer={developer} apiKey={apiKey} onLogout={handleLogout}/>}
           </>
         )}
-      </div>
       </div>
     </div>
   );
