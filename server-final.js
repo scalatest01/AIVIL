@@ -622,7 +622,7 @@ app.get("/verify/:agentId", async (req, res) => {
 });
 
 // ─── ME ──────────────────────────────────────────────────────────────────────
-app.get("/me", authMiddleware, async (req, res) => {
+app.get("/me", requireApiKey, async (req, res) => {
   try {
     const { data: dev, error } = await supabase
       .from("developers")
