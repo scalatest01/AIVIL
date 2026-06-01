@@ -417,9 +417,12 @@ export default function Landing() {
           <button onClick={() => window.goToSignup()} style={{ background: "#c9a84c", color: "#05080f", padding: "14px 32px", borderRadius: 4, fontSize: 13, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, border: "none", cursor: "pointer" }}>
             TRY FREE — NO CREDIT CARD →
           </button>
-          <button onClick={() => window.goToApp && window.goToApp()} style={{ background: "transparent", border: "1px solid rgba(201,168,76,0.3)", color: "#c9a84c", padding: "14px 32px", borderRadius: 4, fontSize: 13, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", cursor: "pointer" }}>
-            ▶ LIVE DEMO
-          </button>
+          <button onClick={() => {
+  sessionStorage.setItem("aivil_demo", "true");
+  window.goToApp && window.goToApp();
+}}>
+  ▶ LIVE DEMO
+</button>
         </div>
 
         <LiveTerminal />
