@@ -459,8 +459,6 @@ function OverviewScreen({ agents, auditLogs, developer, setActive }) {
 }
 
 // ─── POLICY EDITOR COMPONENT ──────────────────────────────────────────────────
-// Drop this function into RealDashboard.jsx just before the AgentsScreen function
-
 function PolicyEditor({ agent, apiKey, onClose, onSaved }) {
   const [form, setForm] = useState({
     spending_limit:               agent.policy?.spending_limit               ?? 100,
