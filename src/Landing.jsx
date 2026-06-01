@@ -420,7 +420,7 @@ export default function Landing() {
           <button onClick={() => {
   sessionStorage.setItem("aivil_demo", "true");
   window.goToApp && window.goToApp();
-}}>
+}} style={{ background:"transparent", border:"1px solid rgba(201,168,76,0.4)", color:"#c9a84c", padding:"14px 32px", borderRadius:4, fontSize:13, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", cursor:"pointer", fontWeight:500 }}>
   ▶ LIVE DEMO
 </button>
         </div>
