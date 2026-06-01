@@ -1,30 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 
-const API      = "https://api.aivildev.com";
+const API = "https://api.aivildev.com";
 const DEMO_KEY = "aivil_demo";
-
-// ─── DEMO DATA ────────────────────────────────────────────────────────────────
 const DEMO_AGENTS = [
-  {
-    id: "AGT-DEMO001", did: "did:aivil:AGT-DEMO001", name: "Procurement Bot",
-    role: "Procurement Specialist", owner: "Demo Corp", status: "active",
-    trust_score: 72, born_at: new Date(Date.now()-86400000*5).toISOString(),
-    approved_count: 47, blocked_count: 3, escalated_count: 2,
-    spent_today: 45.50, spent_lifetime: 312.75, transactions: 23,
-    jurisdiction: "Delaware_USA",
-    policy: { spending_limit: 100, requires_human_signoff_over: 50, allowed_topics: ["vendors","pricing","procurement"], blocked_topics: ["gambling","adult"], enforcement_mode: "balanced" },
-  },
-  {
-    id: "AGT-DEMO002", did: "did:aivil:AGT-DEMO002", name: "Research Agent",
-    role: "Research Analyst", owner: "Demo Corp", status: "active",
-    trust_score: 88, born_at: new Date(Date.now()-86400000*2).toISOString(),
-    approved_count: 124, blocked_count: 1, escalated_count: 0,
-    spent_today: 0, spent_lifetime: 0, transactions: 0,
-    jurisdiction: "EU_GDPR",
-    policy: { spending_limit: 0, allowed_topics: ["research","market","technology"], blocked_topics: ["gambling","adult"], enforcement_mode: "permissive" },
-  },
+  { id:"AGT-DEMO001", did:"did:aivil:AGT-DEMO001", name:"Procurement Bot", role:"Procurement Specialist", owner:"Demo Corp", status:"active", trust_score:72, born_at:new Date(Date.now()-432000000).toISOString(), approved_count:47, blocked_count:3, escalated_count:2, spent_today:45.50, spent_lifetime:312.75, transactions:23, jurisdiction:"Delaware_USA", policy:{ spending_limit:100, requires_human_signoff_over:50, allowed_topics:["vendors","pricing","procurement"], blocked_topics:["gambling","adult"], enforcement_mode:"balanced" } },
+  { id:"AGT-DEMO002", did:"did:aivil:AGT-DEMO002", name:"Research Agent", role:"Research Analyst", owner:"Demo Corp", status:"active", trust_score:88, born_at:new Date(Date.now()-172800000).toISOString(), approved_count:124, blocked_count:1, escalated_count:0, spent_today:0, spent_lifetime:0, transactions:0, jurisdiction:"EU_GDPR", policy:{ spending_limit:0, allowed_topics:["research","market","technology"], blocked_topics:["gambling","adult"], enforcement_mode:"permissive" } },
 ];
-
 const DEMO_LOGS = [
   { id:"log1", agent_id:"AGT-DEMO001", action_type:"purchase", action_domain:"vendor.com", action_amount:45.50, action_description:"Buy software licenses for Q2", verdict:"APPROVED", reason:"All policy checks passed.", flags:[], trust_score:72, signature:"a1b2c3d4e5f6", created_at:new Date(Date.now()-3600000).toISOString() },
   { id:"log2", agent_id:"AGT-DEMO001", action_type:"purchase", action_domain:"casino.gambling", action_amount:200, action_description:"Buy credits on gambling site", verdict:"BLOCKED", reason:"Domain restricted by policy.", flags:["RESTRICTED_DOMAIN"], trust_score:70, signature:"b2c3d4e5f6a1", created_at:new Date(Date.now()-7200000).toISOString() },
@@ -455,10 +436,13 @@ function OverviewScreen({ agents, auditLogs, developer, setActive }) {
           ))}
         </div>
       </div>
+    </div>
   );
 }
 
 // ─── POLICY EDITOR COMPONENT ──────────────────────────────────────────────────
+// Drop this function into RealDashboard.jsx just before the AgentsScreen function
+
 function PolicyEditor({ agent, apiKey, onClose, onSaved }) {
   const [form, setForm] = useState({
     spending_limit:               agent.policy?.spending_limit               ?? 100,
@@ -978,6 +962,7 @@ function SettingsScreen({ developer, apiKey, onLogout }) {
             </div>
           )}
         </div>
+      </div>
     </div>
   );
 }
@@ -1182,11 +1167,7 @@ export default function RealDashboard() {
   const rogueCount = agents.filter(a=>a.status==="suspended").length;
 
   const loadData = async (key) => {
-    if (key === DEMO_KEY) {
-      setAgents(DEMO_AGENTS);
-      setAuditLogs(DEMO_LOGS);
-      return;
-    }
+    if (key === DEMO_KEY) { setAgents(DEMO_AGENTS); setAuditLogs(DEMO_LOGS); return; }
     setLoading(true);
     try {
       const agentsData = await api("GET", "/agents", null, key);
@@ -1227,7 +1208,6 @@ export default function RealDashboard() {
     setIsDemoMode(false);
     window.goToHome();
   };
-
   const enterDemo = () => {
     sessionStorage.setItem("aivil_demo", "true");
     setIsDemoMode(true);
@@ -1236,14 +1216,9 @@ export default function RealDashboard() {
     setAuditLogs(DEMO_LOGS);
   };
 
-  useEffect(() => {
-    if (isDemoMode) { setApiKey(DEMO_KEY); setAgents(DEMO_AGENTS); setAuditLogs(DEMO_LOGS); }
-    else if (apiKey) loadData(apiKey);
-  }, []);
+  useEffect(() => { if(isDemoMode){setApiKey(DEMO_KEY);setAgents(DEMO_AGENTS);setAuditLogs(DEMO_LOGS);} else if(apiKey) loadData(apiKey); }, []);
 
-  // Demo mode renders dashboard directly
   const isDemo = apiKey === DEMO_KEY || isDemoMode;
-
   if(!apiKey && !isDemoMode) return (
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0;}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}input::placeholder{color:#2a3a5a;}`}</style>
@@ -1266,16 +1241,19 @@ export default function RealDashboard() {
           <button onClick={handleLogin} disabled={loginLoading} style={{ width:"100%", background:loginLoading?C.border:C.gold, border:"none", borderRadius:4, color:loginLoading?C.textDim:C.bg, padding:"11px", cursor:loginLoading?"not-allowed":"pointer", fontSize:10, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700, marginBottom:16 }}>
             {loginLoading?"CONNECTING…":"ENTER DASHBOARD →"}
           </button>
-          <div style={{ textAlign:"center", margin:"8px 0 16px" }}>
-            <span style={{ fontSize:11, color:C.textDim, fontFamily:"'JetBrains Mono',monospace" }}>— or —</span>
-          </div>
-          <button onClick={enterDemo} style={{ width:"100%", background:"transparent", border:`1px solid ${C.gold}44`, borderRadius:4, color:C.gold, padding:"11px", cursor:"pointer", fontSize:10, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700, marginBottom:16 }}>
-            ▶ EXPLORE LIVE DEMO
-          </button>
           <div style={{ background:C.goldDim, border:`1px solid ${C.gold}22`, borderRadius:5, padding:12, marginBottom:14 }}>
             <div style={{ fontSize:10, color:C.gold, fontFamily:"'JetBrains Mono',monospace", lineHeight:1.8 }}>
-              Don't have an API key?{" "}<a href="/signup" style={{ color:C.gold }}>Sign up free →</a>{" "}Get one instantly.
+              Don't have an API key? Sign up at{" "}<a href="/signup" style={{ color:C.gold }}>aivil-lake.vercel.app/signup</a>{" "}to get one instantly.
             </div>
+          </div>
+          <div style={{ textAlign:"center", margin:"8px 0 12px" }}>
+            <span style={{ fontSize:10, color:C.textDim, fontFamily:"'JetBrains Mono',monospace" }}>— or —</span>
+          </div>
+          <button onClick={enterDemo} style={{ width:"100%", background:"transparent", border:`1px solid ${C.gold}44`, borderRadius:4, color:C.gold, padding:"10px", cursor:"pointer", fontSize:10, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700, marginBottom:14 }}>
+            ▶ EXPLORE LIVE DEMO
+          </button>
+          <div style={{ textAlign:"center", fontSize:11, color:C.textDim, fontFamily:"'JetBrains Mono',monospace" }}>
+            <a href="/signup" style={{ color:C.gold, textDecoration:"none" }}>Create account →</a>
           </div>
         </div>
       </div>
@@ -1283,19 +1261,20 @@ export default function RealDashboard() {
   );
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", background:C.bg, minHeight:"100vh", color:C.text }}>
-      {isDemo && (
-        <div style={{ background:`${C.gold}15`, borderBottom:`1px solid ${C.gold}44`, padding:"10px 24px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <span style={{ fontSize:9, background:C.gold, color:C.bg, padding:"2px 8px", borderRadius:3, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1, fontWeight:700 }}>DEMO</span>
-            <span style={{ fontSize:11, color:C.gold, fontFamily:"'JetBrains Mono',monospace" }}>Viewing demo data — not real agents</span>
-          </div>
-          <div style={{ display:"flex", gap:10 }}>
-            <button onClick={()=>window.goToSignup&&window.goToSignup()} style={{ background:C.gold, border:"none", borderRadius:3, color:C.bg, padding:"6px 14px", cursor:"pointer", fontSize:9, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700 }}>GET FREE API KEY →</button>
-            <button onClick={handleLogout} style={{ background:"transparent", border:`1px solid ${C.gold}44`, borderRadius:3, color:C.gold, padding:"6px 10px", cursor:"pointer", fontSize:9, fontFamily:"'JetBrains Mono',monospace" }}>EXIT DEMO</button>
-          </div>
+    <>
+    {isDemo && (
+      <div style={{ background:"rgba(201,168,76,0.1)", borderBottom:"1px solid rgba(201,168,76,0.3)", padding:"10px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:200 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:9, background:"#c9a84c", color:"#04060c", padding:"2px 8px", borderRadius:3, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1, fontWeight:700 }}>DEMO</span>
+          <span style={{ fontSize:11, color:"#c9a84c", fontFamily:"'JetBrains Mono',monospace" }}>Viewing demo data — not real agents</span>
         </div>
-      )}
+        <div style={{ display:"flex", gap:10 }}>
+          <button onClick={()=>window.goToSignup&&window.goToSignup()} style={{ background:"#c9a84c", border:"none", borderRadius:3, color:"#04060c", padding:"6px 14px", cursor:"pointer", fontSize:9, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700 }}>GET FREE API KEY →</button>
+          <button onClick={handleLogout} style={{ background:"transparent", border:"1px solid rgba(201,168,76,0.4)", borderRadius:3, color:"#c9a84c", padding:"6px 10px", cursor:"pointer", fontSize:9, fontFamily:"'JetBrains Mono',monospace" }}>EXIT DEMO</button>
+        </div>
+      </div>
+    )}
+    <div style={{ display:"flex", background:C.bg, minHeight:"100vh", color:C.text }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0;}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#04060c}::-webkit-scrollbar-thumb{background:#151f30;border-radius:2px}button{font-family:inherit}input,textarea,select{font-family:inherit}input::placeholder,textarea::placeholder{color:#2a3a5a}`}</style>
 
       <Sidebar active={active} setActive={setActive} rogueCount={rogueCount}/>
@@ -1316,5 +1295,6 @@ export default function RealDashboard() {
         )}
       </div>
     </div>
+    </>
   );
 }
