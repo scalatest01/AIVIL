@@ -531,11 +531,7 @@ console.log(verdict.agent_registry)
 // 4. Email sent to your registered address
 
 // Reactivate after review:
-await fetch("https://api.aivildev.com/agents/AGT-ID/reactivate", {
-  method: "POST",
-  headers: { "Authorization": "Bearer aivil_your_key" },
-  body: JSON.stringify({ reason: "Reviewed and cleared" })
-})`}</Code>
+await aivil.reactivate("AGT-ID", "Reviewed and cleared")`}</Code>
           </Section>
 
           {/* API Reference */}
@@ -649,10 +645,12 @@ curl -X POST https://api.aivildev.com/agents/AGT-ID/audit \\
   -H "Authorization: Bearer aivil_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "action": "purchase",
-    "amount": 30,
-    "domain": "openai.com",
-    "description": "Buy API credits"
+    "action": {
+      "type": "purchase",
+      "amount": 30,
+      "domain": "openai.com",
+      "description": "Buy API credits"
+    }
   }'
 
 # Verify any agent (no auth needed)
