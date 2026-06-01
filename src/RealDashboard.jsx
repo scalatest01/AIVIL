@@ -454,7 +454,7 @@ function OverviewScreen({ agents, auditLogs, developer, setActive }) {
             </div>
           ))}
         </div>
-    </div>
+      </div>
   );
 }
 
