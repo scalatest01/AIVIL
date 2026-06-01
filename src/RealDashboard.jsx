@@ -386,6 +386,7 @@ function Sidebar({ active, setActive, rogueCount }) {
           SETTINGS & SIGN OUT
         </button>
       </div>
+      </div>
     </div>
   );
 }
@@ -454,6 +455,7 @@ function OverviewScreen({ agents, auditLogs, developer, setActive }) {
             </div>
           ))}
         </div>
+      </div>
       </div>
     </div>
   );
@@ -626,6 +628,7 @@ function PolicyEditor({ agent, apiKey, onClose, onSaved }) {
           </button>
         </div>
 
+      </div>
       </div>
     </div>
   );
@@ -817,6 +820,7 @@ function AuditScreen({ auditLogs }) {
           </div>
         ))}
       </div>
+      </div>
     </div>
   );
 }
@@ -882,6 +886,7 @@ function SecurityScreen({ agents, auditLogs, apiKey, onRefresh }) {
         {agents.length===0 && (
           <div style={{ padding:"30px", textAlign:"center", fontSize:11, color:C.textDim, fontFamily:"'JetBrains Mono',monospace" }}>No agents registered yet</div>
         )}
+      </div>
       </div>
     </div>
   );
@@ -981,6 +986,7 @@ function SettingsScreen({ developer, apiKey, onLogout }) {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
@@ -1166,6 +1172,7 @@ function LiveScreen({ agents, apiKey }) {
           );
         })}
       </div>
+      </div>
     </div>
   );
 }
@@ -1319,6 +1326,7 @@ export default function RealDashboard() {
             {active==="settings" && <SettingsScreen developer={developer} apiKey={apiKey} onLogout={handleLogout}/>}
           </>
         )}
+      </div>
       </div>
     </div>
   );
