@@ -146,7 +146,6 @@ function RogueAlert({ agents, onReview }) {
         REVIEW NOW
       </button>
     </div>
-      </div>
   );
 }
 
