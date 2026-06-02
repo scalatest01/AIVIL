@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// AIVIL — AI Vital Identity Layer  v2.2.0
+// AIVIL — AI Vital Identity Layer  v2.3.0
 // npm install aivil
 // The civil registry for artificial intelligence
 // Open source forever · AGPL-3.0 · github.com/scalatest01/AIVIL
@@ -7,7 +7,7 @@
 
 "use strict";
 
-const AIVIL_VERSION   = "2.2.0";
+const AIVIL_VERSION   = "2.3.0";
 const DEFAULT_API     = "https://api.aivildev.com";
 const DEFAULT_TIMEOUT = 8000;
 const MAX_RETRIES     = 2;
@@ -20,9 +20,10 @@ if (!process.env.AIVIL_KEY && !process.env.AIVIL_API_KEY) {
     "\n  ║   The Civil Registry for AI Agents    ║" +
     "\n  ╠════════════════════════════════════════╣" +
     "\n  ║                                        ║" +
-    "\n  ║  ⚠  NO API KEY DETECTED               ║" +
+    "\n  ║  Try instantly (no signup needed):    ║" +
+    "\n  ║  new AIVIL({ apiKey: 'aivil_demo' }) ║" +
     "\n  ║                                        ║" +
-    "\n  ║  Get your free key in 30 seconds:     ║" +
+    "\n  ║  Get your free key:                   ║" +
     "\n  ║  → https://aivildev.com/signup        ║" +
     "\n  ║                                        ║" +
     "\n  ╚════════════════════════════════════════╝\n"
@@ -99,11 +100,13 @@ class AIVIL {
     this._debug   = config.debug    || false;
     this._log     = this._debug ? (...a) => console.log("[AIVIL]", ...a) : () => {};
 
+    this.isDemo = this.apiKey === "aivil_demo";
+
     if (!this.apiKey) {
       throw new AIVILAuthError(
         "No API key provided.\n" +
-        "  Get your free key at: https://aivildev.com/signup\n" +
-        "  Then: new AIVIL({ apiKey: 'aivil_your_key' })"
+        "  Try demo mode: new AIVIL({ apiKey: 'aivil_demo' })\n" +
+        "  Or get a free key at: https://aivildev.com/signup"
       );
     }
   }
