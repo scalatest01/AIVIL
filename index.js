@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// AIVIL — AI Vital Identity Layer  v2.3.0
+// AIVIL — AI Vital Identity Layer  v2.3.1
 // npm install aivil
 // The civil registry for artificial intelligence
 // Open source forever · AGPL-3.0 · github.com/scalatest01/AIVIL
@@ -7,7 +7,7 @@
 
 "use strict";
 
-const AIVIL_VERSION   = "2.3.0";
+const AIVIL_VERSION   = "2.3.1";
 const DEFAULT_API     = "https://api.aivildev.com";
 const DEFAULT_TIMEOUT = 8000;
 const MAX_RETRIES     = 2;
@@ -76,6 +76,44 @@ const fetchWithTimeout = async (url, opts, timeout) => {
     throw e;
   }
 };
+
+// ─── VERSION CHECK ───────────────────────────────────────────────────────────
+const checkForUpdates = () => {
+  try {
+    const https = require("https");
+    const options = { hostname:"registry.npmjs.org", path:"/aivil/latest", method:"GET", timeout:3000 };
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", chunk => data += chunk);
+      res.on("end", () => {
+        try {
+          const latest = JSON.parse(data).version;
+          if (latest && latest !== AIVIL_VERSION) {
+            console.log(
+              `\n  [AIVIL] Update available: ${AIVIL_VERSION} → ${latest}` +
+              `\n  Run: npm install aivil@latest\n`
+            );
+          }
+        } catch(e) {}
+      });
+    });
+    req.on("error", () => {});
+    req.on("timeout", () => { req.destroy(); });
+    req.end();
+  } catch(e) {}
+};
+
+// Check once per day using a temp file flag
+try {
+  const fs = require("fs");
+  const os = require("os");
+  const flagFile = require("path").join(os.tmpdir(), ".aivil_update_check");
+  const lastCheck = fs.existsSync(flagFile) ? parseInt(fs.readFileSync(flagFile, "utf8")) : 0;
+  if (Date.now() - lastCheck > 86400000) {
+    fs.writeFileSync(flagFile, String(Date.now()));
+    checkForUpdates();
+  }
+} catch(e) {}
 
 // ─── MAIN CLASS ───────────────────────────────────────────────────────────────
 class AIVIL {
