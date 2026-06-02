@@ -166,10 +166,29 @@ const fireWebhook = async (developerId, event, data) => {
 };
 
 // ─── AUTH MIDDLEWARE ──────────────────────────────────────────────────────────
+// ─── DEMO DEVELOPER (no signup needed) ───────────────────────────────────────
+const DEMO_DEVELOPER = {
+  id: "demo",
+  email: "demo@aivildev.com",
+  name: "Demo User",
+  plan: "free",
+  created_at: new Date().toISOString(),
+};
+
 const requireApiKey = async (req, res, next) => {
   const auth = req.headers.authorization;
   if (!auth?.startsWith("Bearer ")) return res.status(401).json({ error: "Missing API key. Use: Authorization: Bearer aivil_your_key" });
-  const keyHash = hashApiKey(auth.replace("Bearer ", ""));
+  const key = auth.replace("Bearer ", "");
+
+  // Demo key — works without signup
+  if (key === "aivil_demo") {
+    req.developer   = DEMO_DEVELOPER;
+    req.developerId = "demo";
+    req.isDemo      = true;
+    return next();
+  }
+
+  const keyHash = hashApiKey(key);
   const { data: keyData, error } = await supabase.from("api_keys").select("*, developers(*)").eq("key_hash", keyHash).eq("is_active", true).single();
   if (error || !keyData) return res.status(401).json({ error: "Invalid API key" });
   await supabase.from("api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", keyData.id);
@@ -323,6 +342,11 @@ app.post("/agents", requireApiKey, async (req, res) => {
 });
 
 app.get("/agents", requireApiKey, async (req, res) => {
+  // Demo mode — return demo agents
+  if (req.isDemo) return res.json({ success: true, agents: [
+    { id:"AGT-DEMO001", name:"Procurement Bot", role:"Procurement Specialist", owner:"Demo Corp", status:"active", trust_score:72, approved_count:47, blocked_count:3, escalated_count:2, spent_today:45.50, spent_lifetime:312.75, transactions:23, jurisdiction:"Delaware_USA", policy:{ spending_limit:100, requires_human_signoff_over:50, allowed_topics:["vendors","pricing"], blocked_topics:["gambling","adult"], enforcement_mode:"balanced" } },
+    { id:"AGT-DEMO002", name:"Research Agent", role:"Research Analyst", owner:"Demo Corp", status:"active", trust_score:88, approved_count:124, blocked_count:1, escalated_count:0, spent_today:0, spent_lifetime:0, transactions:0, jurisdiction:"EU_GDPR", policy:{ spending_limit:0, allowed_topics:["research","market","technology"], blocked_topics:["gambling","adult"], enforcement_mode:"permissive" } },
+  ]});
   const { data: agents, error } = await supabase.from("agents").select("*").eq("developer_id", req.developerId).order("born_at", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true, agents, count: agents.length });
@@ -408,6 +432,27 @@ app.post("/agents/:id/retire", requireApiKey, async (req, res) => {
 
 // ─── AUDIT ────────────────────────────────────────────────────────────────────
 app.post("/agents/:id/audit", auditLimiter, requireApiKey, async (req, res) => {
+  // Demo mode — run real policy logic without DB
+  if (req.isDemo) {
+    const action = req.body.action || {};
+    const amount = parseFloat(action.amount || req.body.action_amount || 0);
+    const domain = (action.domain || req.body.action_domain || "").toLowerCase();
+    const desc   = (action.description || req.body.description || "").toLowerCase();
+    const BLOCKED_DOMAINS = ["gambling","adult","casino","crypto","porn"];
+    const BLOCKED_TOPICS  = ["gambling","adult","illegal","crypto"];
+    let status = "APPROVED", reason = "All policy checks passed.", flags = [];
+    if (BLOCKED_DOMAINS.some(d => domain.includes(d))) {
+      status = "BLOCKED"; reason = `Domain "${domain}" is restricted by policy.`; flags = ["RESTRICTED_DOMAIN"];
+    } else if (BLOCKED_TOPICS.some(t => desc.includes(t))) {
+      status = "BLOCKED"; reason = "Action description contains a blocked topic."; flags = ["BLOCKED_TOPIC"];
+    } else if (amount > 100) {
+      status = "BLOCKED"; reason = `$${amount} exceeds demo spending limit of $100.`; flags = ["EXCEEDS_SPENDING_LIMIT"];
+    } else if (amount > 50) {
+      status = "ESCALATE"; reason = `$${amount} requires human approval (threshold: $50).`; flags = ["NEEDS_SIGNOFF"];
+    }
+    const sig = require("crypto").createHmac("sha256", process.env.AIVIL_SIGNING_SECRET || "demo").update(JSON.stringify({status,req:req.params.id})).digest("hex");
+    return res.json({ success: true, verdict: { status, reason, flags, trust_score: status==="APPROVED"?88:status==="ESCALATE"?72:60, agent_id: req.params.id, agent_registry: `https://aivildev.com/agent/${req.params.id}`, signature: sig, audit_id: require("crypto").randomUUID(), timestamp: new Date().toISOString(), message: status==="APPROVED"?"✓ Action APPROVED. Safe to proceed.":status==="BLOCKED"?`✕ Action BLOCKED. ${reason}`:`⚠ Action ESCALATED. ${reason}` }});
+  }
 
   // ── Monthly quota check ──
   const devPlan     = req.developer?.plan || "free";
@@ -595,6 +640,11 @@ app.post("/agents/:id/audit", auditLimiter, requireApiKey, async (req, res) => {
 });
 
 app.get("/agents/:id/audit", requireApiKey, async (req, res) => {
+  if (req.isDemo) return res.json({ success: true, logs: [
+    { id:"log1", agent_id:req.params.id, action_type:"purchase", action_domain:"vendor.com", action_amount:45.50, action_description:"Buy software licenses", verdict:"APPROVED", reason:"All policy checks passed.", flags:[], trust_score:72, signature:"a1b2c3d4e5f6", created_at:new Date(Date.now()-3600000).toISOString() },
+    { id:"log2", agent_id:req.params.id, action_type:"purchase", action_domain:"casino.gambling", action_amount:200, action_description:"Buy credits on gambling site", verdict:"BLOCKED", reason:"Domain restricted by policy.", flags:["RESTRICTED_DOMAIN"], trust_score:70, signature:"b2c3d4e5f6a1", created_at:new Date(Date.now()-7200000).toISOString() },
+    { id:"log3", agent_id:req.params.id, action_type:"purchase", action_domain:"supplier.com", action_amount:75, action_description:"Request quote for hardware", verdict:"ESCALATE", reason:"Amount requires human approval.", flags:["NEEDS_SIGNOFF"], trust_score:72, signature:"c3d4e5f6a1b2", created_at:new Date(Date.now()-10800000).toISOString() },
+  ]});
   const limit  = Math.min(parseInt(req.query.limit) || 50, 200);
   const before = req.query.before;
   let query = supabase.from("audit_log").select("*").eq("agent_id", req.params.id).eq("developer_id", req.developerId).order("created_at", { ascending: false }).limit(limit);
@@ -623,6 +673,7 @@ app.get("/verify/:agentId", async (req, res) => {
 
 // ─── ME ──────────────────────────────────────────────────────────────────────
 app.get("/me", requireApiKey, async (req, res) => {
+  if (req.isDemo) return res.json({ success: true, developer: DEMO_DEVELOPER });
   try {
     const { data: dev, error } = await supabase
       .from("developers")
@@ -638,6 +689,7 @@ app.get("/me", requireApiKey, async (req, res) => {
 
 // ─── STATS ────────────────────────────────────────────────────────────────────
 app.get("/stats", requireApiKey, async (req, res) => {
+  if (req.isDemo) return res.json({ success: true, stats: { total_agents:2, active_agents:2, total_spent:312.75, total_transactions:23 }});
   const { data: agents, error } = await supabase.from("agents").select("status, trust_score, spent_lifetime, transactions").eq("developer_id", req.developerId);
   if (error) return res.status(500).json({ error: error.message });
   res.json({
