@@ -9,7 +9,6 @@ const C = {
 };
 
 const NAV_SECTIONS = [
-  { id:"gateway", label:"B2B Gateway ✦ New" },
   { id:"quickstart", label:"Quick Start" },
   { id:"mcp", label:"MCP Server ✦ New" },
   { id:"authentication", label:"Authentication" },
@@ -115,7 +114,7 @@ export default function DocsPage() {
             <div style={{ fontSize:9, color:C.textDim, letterSpacing:3, fontFamily:"'JetBrains Mono',monospace" }}>DOCUMENTATION</div>
           </div>
           {NAV_SECTIONS.map(s => (
-            <button key={s.id} onClick={()=>scrollTo(s.id)} style={{ width:"100%", textAlign:"left", padding:"9px 20px", background:activeSection===s.id?C.goldDim:"transparent", borderLeft:activeSection===s.id?`2px solid ${C.gold}`:"2px solid transparent", border:"none", cursor:"pointer", color:activeSection===s.id?C.text:s.id==="mcp"?C.gold:C.textDim, fontSize:12, fontFamily:"'JetBrains Mono',monospace", letterSpacing:0.5 }}>
+            <button key={s.id} onClick={()=>scrollTo(s.id)} style={{ width:"100%", textAlign:"left", padding:"9px 20px", background:activeSection===s.id?C.goldDim:"transparent", borderLeft:activeSection===s.id?`2px solid ${C.gold}`:"2px solid transparent", border:"none", cursor:"pointer", color:activeSection===s.id?C.text:(s.id==="mcp"||s.id==="gateway")?C.gold:C.textDim, fontSize:12, fontFamily:"'JetBrains Mono',monospace", letterSpacing:0.5 }}>
               {s.label}
             </button>
           ))}
@@ -142,6 +141,7 @@ export default function DocsPage() {
               <Badge label="AGPL v3" color={C.green}/>
               <Badge label="OPEN SOURCE" color={C.blue}/>
               <Badge label="MCP READY" color={C.purple}/>
+              <Badge label="GATEWAY READY" color={C.green}/>
             </div>
           </div>
 
@@ -304,29 +304,54 @@ if (verdict.status === "BLOCKED") {
           </Section>
           {/* ─────────────────────────────────────────────────────────────── */}
 
+          {/* B2B GATEWAY */}
           <Section id="gateway" title="B2B API Gateway">
-  <div style={{ background:`rgba(201,168,76,0.06)`, border:`1px solid ${C.gold}44`, borderRadius:8, padding:16, marginBottom:24 }}>
-    <div style={{ fontSize:11, color:C.gold, fontFamily:"'JetBrains Mono',monospace", letterSpacing:2, marginBottom:6 }}>ZERO CODE CHANGES REQUIRED</div>
-    <div style={{ fontSize:13, color:C.textMid, lineHeight:1.8 }}>
-      Route your existing LLM calls through the AIVIL Gateway. Every request is policy-checked and audit-logged before reaching the provider. Just change one URL.
-    </div>
-  </div>
-  <h3>Gateway URL</h3>
-  <Code lang="text">https://gateway.aivildev.com</Code>
-  <h3>Usage</h3>
-  <Code>{`// Before
+            <div style={{ background:`rgba(201,168,76,0.06)`, border:`1px solid ${C.gold}44`, borderRadius:8, padding:16, marginBottom:24 }}>
+              <div style={{ fontSize:11, color:C.gold, fontFamily:"'JetBrains Mono',monospace", letterSpacing:2, marginBottom:6 }}>✦ NEW — ZERO CODE CHANGES REQUIRED</div>
+              <div style={{ fontSize:13, color:C.textMid, lineHeight:1.8 }}>
+                Route your existing LLM calls through the AIVIL Gateway. Every request is policy-checked and audit-logged before it reaches the provider. Just change one URL.
+              </div>
+            </div>
+
+            <h3 style={{ fontSize:16, color:C.text, marginBottom:12, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1 }}>Gateway URL</h3>
+            <Code lang="text">https://gateway.aivildev.com</Code>
+
+            <h3 style={{ fontSize:16, color:C.text, marginBottom:12, marginTop:24, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1 }}>Usage — One Line Change</h3>
+            <Code>{`// Before — direct to OpenAI
 const openai = new OpenAI({ baseURL: "https://api.openai.com" })
 
-// After — one line change, full AIVIL protection
-const openai = new OpenAI({ baseURL: "https://gateway.aivildev.com/openai" })`}</Code>
-  <h3>Supported Providers</h3>
-  <Code lang="text">{`gateway.aivildev.com/openai     → api.openai.com
+// After — routed through AIVIL Gateway
+const openai = new OpenAI({ baseURL: "https://gateway.aivildev.com/openai" })
+
+// Everything else stays exactly the same
+// If policy blocks it → 403 returned, OpenAI never called
+// If approved → forwarded normally, decision logged`}</Code>
+
+            <h3 style={{ fontSize:16, color:C.text, marginBottom:12, marginTop:24, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1 }}>Supported Providers</h3>
+            <Code lang="text">{`gateway.aivildev.com/openai     → api.openai.com
 gateway.aivildev.com/anthropic  → api.anthropic.com
 gateway.aivildev.com/groq       → api.groq.com
 gateway.aivildev.com/cohere     → api.cohere.com
 gateway.aivildev.com/mistral    → api.mistral.ai
 gateway.aivildev.com/together   → api.together.xyz`}</Code>
-</Section>
+
+            <h3 style={{ fontSize:16, color:C.text, marginBottom:12, marginTop:24, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1 }}>What Happens</h3>
+            <div style={{ display:"grid", gap:8, marginBottom:24 }}>
+              {[
+                [C.green, "APPROVED",  "Request forwarded to LLM normally. Decision logged."],
+                [C.gold,  "ESCALATE",  "Request blocked. 403 returned. Human approval required."],
+                [C.red,   "BLOCKED",   "Request blocked. 403 returned. LLM never called."],
+              ].map(([color, status, desc]) => (
+                <div key={status} style={{ display:"flex", gap:12, padding:"12px 16px", background:C.card, border:`1px solid ${C.border}`, borderRadius:6 }}>
+                  <span style={{ fontSize:9, padding:"2px 8px", borderRadius:3, background:`${color}11`, border:`1px solid ${color}33`, color, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1, whiteSpace:"nowrap", alignSelf:"center" }}>{status}</span>
+                  <span style={{ fontSize:12, color:C.textMid }}>{desc}</span>
+                </div>
+              ))}
+            </div>
+
+            <h3 style={{ fontSize:16, color:C.text, marginBottom:12, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1 }}>Health Check</h3>
+            <Code lang="bash">curl https://gateway.aivildev.com/health</Code>
+          </Section>
 
           {/* Authentication */}
           <Section id="authentication" title="Authentication">
@@ -562,9 +587,11 @@ await aivil.reactivate("AGT-ID", "Reviewed and cleared")`}</Code>
           {/* API Reference */}
           <Section id="api-reference" title="API Reference">
             <p style={{ fontSize:14, color:C.textMid, lineHeight:1.8, marginBottom:24 }}>
-              Base URL: <code style={{ color:C.blue, fontFamily:"'JetBrains Mono',monospace" }}>https://api.aivildev.com</code>
+              API: <code style={{ color:C.blue, fontFamily:"'JetBrains Mono',monospace" }}>https://api.aivildev.com</code>
               &nbsp;&nbsp;·&nbsp;&nbsp;
-              MCP URL: <code style={{ color:C.purple, fontFamily:"'JetBrains Mono',monospace" }}>https://mcp.aivildev.com/mcp</code>
+              MCP: <code style={{ color:C.purple, fontFamily:"'JetBrains Mono',monospace" }}>https://mcp.aivildev.com/mcp</code>
+              &nbsp;&nbsp;·&nbsp;&nbsp;
+              Gateway: <code style={{ color:C.green, fontFamily:"'JetBrains Mono',monospace" }}>https://gateway.aivildev.com</code>
             </p>
 
             <h3 style={{ fontSize:16, color:C.text, marginBottom:12, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1 }}>Authentication</h3>
