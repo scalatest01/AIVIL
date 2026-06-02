@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// AIVIL — AI Vital Identity Layer  v2.3.1
+// AIVIL — AI Vital Identity Layer  v2.3.2
 // npm install aivil
 // The civil registry for artificial intelligence
 // Open source forever · AGPL-3.0 · github.com/scalatest01/AIVIL
@@ -7,28 +7,13 @@
 
 "use strict";
 
-const AIVIL_VERSION   = "2.3.1";
+const AIVIL_VERSION   = "2.3.2";
 const DEFAULT_API     = "https://api.aivildev.com";
 const DEFAULT_TIMEOUT = 8000;
 const MAX_RETRIES     = 2;
 
 // ─── STARTUP MESSAGE ─────────────────────────────────────────────────────────
-if (!process.env.AIVIL_KEY && !process.env.AIVIL_API_KEY) {
-  console.log(
-    "\n  ╔════════════════════════════════════════╗" +
-    "\n  ║           AIVIL v" + AIVIL_VERSION + "               ║" +
-    "\n  ║   The Civil Registry for AI Agents    ║" +
-    "\n  ╠════════════════════════════════════════╣" +
-    "\n  ║                                        ║" +
-    "\n  ║  Try instantly (no signup needed):    ║" +
-    "\n  ║  new AIVIL({ apiKey: 'aivil_demo' }) ║" +
-    "\n  ║                                        ║" +
-    "\n  ║  Get your free key:                   ║" +
-    "\n  ║  → https://aivildev.com/signup        ║" +
-    "\n  ║                                        ║" +
-    "\n  ╚════════════════════════════════════════╝\n"
-  );
-}
+// Startup message moved to constructor — only shows when truly no key
 
 // ─── CUSTOM ERRORS ────────────────────────────────────────────────────────────
 class AIVILError extends Error {
@@ -141,10 +126,24 @@ class AIVIL {
     this.isDemo = this.apiKey === "aivil_demo";
 
     if (!this.apiKey) {
+      console.log(
+        "\n  ╔════════════════════════════════════════╗" +
+        "\n  ║           AIVIL v" + AIVIL_VERSION + "               ║" +
+        "\n  ║   The Civil Registry for AI Agents    ║" +
+        "\n  ╠════════════════════════════════════════╣" +
+        "\n  ║                                        ║" +
+        "\n  ║  Try instantly (no signup needed):    ║" +
+        "\n  ║  new AIVIL({ apiKey: 'aivil_demo' }) ║" +
+        "\n  ║                                        ║" +
+        "\n  ║  Get your free key:                   ║" +
+        "\n  ║  → https://aivildev.com/signup        ║" +
+        "\n  ║                                        ║" +
+        "\n  ╚════════════════════════════════════════╝\n"
+      );
       throw new AIVILAuthError(
         "No API key provided.\n" +
         "  Try demo mode: new AIVIL({ apiKey: 'aivil_demo' })\n" +
-        "  Or get a free key at: https://aivildev.com/signup"
+        "  Or get your free key at: https://aivildev.com/signup"
       );
     }
   }
