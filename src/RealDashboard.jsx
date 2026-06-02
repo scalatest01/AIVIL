@@ -1218,9 +1218,14 @@ export default function RealDashboard() {
     setAuditLogs(DEMO_LOGS);
   };
 
-  useEffect(() => { if(apiKey) loadData(apiKey); }, []);
+  useEffect(() => {
+    const demo = sessionStorage.getItem("aivil_demo") === "true";
+    if (demo) { setIsDemoMode(true); setApiKey(DEMO_KEY); setAgents(DEMO_AGENTS); setAuditLogs(DEMO_LOGS); }
+    else if (apiKey) loadData(apiKey);
+  }, []);
 
-  if(!apiKey) return (
+  const isDemo = apiKey === DEMO_KEY || isDemoMode;
+  if(!apiKey && !isDemoMode) return (
     <div style={{ minHeight:"100vh", background:C.bg, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0;}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}input::placeholder{color:#2a3a5a;}`}</style>
       <div style={{ width:"100%", maxWidth:440, animation:"fadeUp 0.4s ease" }}>
@@ -1247,6 +1252,12 @@ export default function RealDashboard() {
               Don't have an API key? Sign up at{" "}<a href="/signup" style={{ color:C.gold }}>aivil-lake.vercel.app/signup</a>{" "}to get one instantly.
             </div>
           </div>
+          <div style={{ textAlign:"center", margin:"8px 0 12px" }}>
+            <span style={{ fontSize:10, color:C.textDim, fontFamily:"'JetBrains Mono',monospace" }}>— or —</span>
+          </div>
+          <button onClick={enterDemo} style={{ width:"100%", background:"transparent", border:`1px solid ${C.gold}44`, borderRadius:4, color:C.gold, padding:"10px", cursor:"pointer", fontSize:10, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700, marginBottom:14 }}>
+            ▶ EXPLORE LIVE DEMO
+          </button>
           <div style={{ textAlign:"center", fontSize:11, color:C.textDim, fontFamily:"'JetBrains Mono',monospace" }}>
             <a href="/signup" style={{ color:C.gold, textDecoration:"none" }}>Create account →</a>
           </div>
@@ -1256,6 +1267,19 @@ export default function RealDashboard() {
   );
 
   return (
+    <>
+    {isDemo && (
+      <div style={{ background:"#0d1220", borderBottom:"1px solid rgba(201,168,76,0.3)", padding:"10px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:200 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:9, background:"#c9a84c", color:"#04060c", padding:"2px 8px", borderRadius:3, fontFamily:"'JetBrains Mono',monospace", letterSpacing:1, fontWeight:700 }}>DEMO</span>
+          <span style={{ fontSize:11, color:"#c9a84c", fontFamily:"'JetBrains Mono',monospace" }}>Viewing demo data — not real agents</span>
+        </div>
+        <div style={{ display:"flex", gap:10 }}>
+          <button onClick={()=>window.goToSignup&&window.goToSignup()} style={{ background:"#c9a84c", border:"none", borderRadius:3, color:"#04060c", padding:"6px 14px", cursor:"pointer", fontSize:9, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700 }}>GET FREE API KEY →</button>
+          <button onClick={handleLogout} style={{ background:"transparent", border:"1px solid rgba(201,168,76,0.4)", borderRadius:3, color:"#c9a84c", padding:"6px 10px", cursor:"pointer", fontSize:9, fontFamily:"'JetBrains Mono',monospace" }}>EXIT DEMO</button>
+        </div>
+      </div>
+    )}
     <div style={{ display:"flex", background:C.bg, minHeight:"100vh", color:C.text }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0;}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#04060c}::-webkit-scrollbar-thumb{background:#151f30;border-radius:2px}button{font-family:inherit}input,textarea,select{font-family:inherit}input::placeholder,textarea::placeholder{color:#2a3a5a}`}</style>
 
@@ -1277,5 +1301,6 @@ export default function RealDashboard() {
         )}
       </div>
     </div>
+    </>
   );
 }
