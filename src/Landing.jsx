@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import VulnerabilityScanner from "./VulnerabilityScanner";
 const useInView = (threshold = 0.15) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false); 
@@ -142,8 +141,8 @@ function LiveTerminal() {
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(201,168,76,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 10, color: "#3d5070", fontFamily: "'JetBrains Mono',monospace" }}>npm install aivil</span>
-          <button onClick={() => window.goToSignup()} style={{ background: "#c9a84c", border: "none", borderRadius: 4, color: "#05080f", padding: "6px 14px", cursor: "pointer", fontSize: 10, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
-            GET API KEY →
+          <button onClick={() => { sessionStorage.setItem("aivil_demo", "true"); window.goToApp && window.goToApp(); }} style={{ background: "#c9a84c", border: "none", borderRadius: 4, color: "#05080f", padding: "6px 14px", cursor: "pointer", fontSize: 10, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
+            ▶ TRY LIVE DEMO →
           </button>
         </div>
       </div>
@@ -318,8 +317,8 @@ function LiveBoardDemo() {
             {/* Footer */}
             <div style={{ padding:"12px 20px", borderTop:"1px solid rgba(201,168,76,0.08)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <span style={{ fontSize:10, color:"#3d5070", fontFamily:"'JetBrains Mono',monospace" }}>Prometheus · Procurement Specialist · AGT-IEL8CMEM</span>
-              <button onClick={()=>window.goToSignup()} style={{ background:"#c9a84c", border:"none", borderRadius:4, color:"#05080f", padding:"6px 14px", cursor:"pointer", fontSize:10, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700 }}>
-                MONITOR YOUR AGENT →
+              <button onClick={() => { sessionStorage.setItem("aivil_demo", "true"); window.goToApp && window.goToApp(); }} style={{ background:"#c9a84c", border:"none", borderRadius:4, color:"#05080f", padding:"6px 14px", cursor:"pointer", fontSize:10, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", fontWeight:700 }}>
+                ▶ SEE LIVE DASHBOARD →
               </button>
             </div>
           </div>
@@ -370,11 +369,8 @@ export default function Landing() {
             onMouseEnter={e => e.target.style.color = "#c9a84c"} onMouseLeave={e => e.target.style.color = "#6b7a9a"}>GitHub</a>
           <a href="https://npmjs.com/package/aivil" target="_blank" rel="noreferrer" style={{ fontSize: 12, color: "#6b7a9a", letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace" }}
             onMouseEnter={e => e.target.style.color = "#c9a84c"} onMouseLeave={e => e.target.style.color = "#6b7a9a"}>npm</a>
-          <button onClick={() => window.goToApp()} style={{ background: "transparent", border: "1px solid rgba(201,168,76,0.3)", color: "#c9a84c", padding: "7px 16px", borderRadius: 4, fontSize: 11, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", cursor: "pointer" }}>
-            SIGN IN
-          </button>
-          <button onClick={() => window.goToSignup()} style={{ background: "#c9a84c", color: "#05080f", padding: "8px 20px", borderRadius: 4, fontSize: 11, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", fontWeight: 500, border: "none", cursor: "pointer" }}>
-            GET API KEY →
+          <button onClick={() => window.goToApp()} style={{ background: "#c9a84c", color: "#05080f", padding: "8px 20px", borderRadius: 4, fontSize: 11, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, border: "none", cursor: "pointer" }}>
+            SIGN IN →
           </button>
         </div>
       </nav>
@@ -390,39 +386,21 @@ export default function Landing() {
         </div>
 
         <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(48px,8vw,96px)", fontWeight: 300, textAlign: "center", lineHeight: 1.1, letterSpacing: -1, marginBottom: 24, maxWidth: 900 }}>
-          Your AI agent is running.<br />
-          <span style={{ fontStyle: "italic", color: "#c9a84c" }}>Do you know what it's doing?</span>
+          Every AI agent<br />
+          <span style={{ fontStyle: "italic", color: "#c9a84c" }}>deserves an identity.</span>
         </h1>
 
-        <p style={{ fontSize: 18, color: "#6b7a9a", textAlign: "center", maxWidth: 580, lineHeight: 1.8, marginBottom: 24, fontWeight: 300 }}>
-          Uncontrolled AI agents burn money in runaway loops, leak data through unchecked calls, and act without oversight. AIVIL stops this in 3 lines of code.
+        <p style={{ fontSize: 18, color: "#6b7a9a", textAlign: "center", maxWidth: 560, lineHeight: 1.8, marginBottom: 48, fontWeight: 300 }}>
+          AIVIL is the civil registry for artificial intelligence. Verified identities, life records, and policy controls for every AI agent on earth.
         </p>
 
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#ff4d6a", fontSize: 12 }}>✕</span>
-            <span style={{ fontSize: 12, color: "#3d5070", fontFamily: "'JetBrains Mono',monospace" }}>Agent loops overnight → unexpected bill</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#ff4d6a", fontSize: 12 }}>✕</span>
-            <span style={{ fontSize: 12, color: "#3d5070", fontFamily: "'JetBrains Mono',monospace" }}>No audit trail → zero legal protection</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#ff4d6a", fontSize: 12 }}>✕</span>
-            <span style={{ fontSize: 12, color: "#3d5070", fontFamily: "'JetBrains Mono',monospace" }}>Agent acts unilaterally → data leak</span>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", marginBottom: 80, marginTop: 32 }}>
-          <button onClick={() => window.goToSignup()} style={{ background: "#c9a84c", color: "#05080f", padding: "14px 32px", borderRadius: 4, fontSize: 13, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, border: "none", cursor: "pointer" }}>
-            TRY FREE — NO CREDIT CARD →
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", marginBottom: 80 }}>
+          <button onClick={() => { sessionStorage.setItem("aivil_demo", "true"); window.goToApp && window.goToApp(); }} style={{ background: "#c9a84c", color: "#05080f", padding: "14px 32px", borderRadius: 4, fontSize: 13, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, border: "none", cursor: "pointer" }}>
+            ▶ TRY LIVE DEMO →
           </button>
-          <button onClick={() => {
-  sessionStorage.setItem("aivil_demo", "true");
-  window.goToApp && window.goToApp();
-}} style={{ background:"transparent", border:"1px solid rgba(201,168,76,0.4)", color:"#c9a84c", padding:"14px 32px", borderRadius:4, fontSize:13, letterSpacing:2, fontFamily:"'JetBrains Mono',monospace", cursor:"pointer", fontWeight:500 }}>
-  ▶ LIVE DEMO
-</button>
+          <button onClick={() => window.goToSignup()} style={{ background: "transparent", border: "1px solid rgba(201,168,76,0.3)", color: "#c9a84c", padding: "14px 32px", borderRadius: 4, fontSize: 13, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", cursor: "pointer" }}>
+            GET FREE API KEY
+          </button>
         </div>
 
         <LiveTerminal />
@@ -579,9 +557,6 @@ export default function Landing() {
           </Reveal>
         </div>
       </section>
-
-      {/* VULNERABILITY SCANNER */}
-      <VulnerabilityScanner />
 
       {/* FOOTER */}
       <footer style={{ borderTop: "1px solid #0d1525", padding: "40px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
