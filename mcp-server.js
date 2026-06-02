@@ -145,14 +145,13 @@ const executeTool = async (toolName, args) => {
 
       case "aivil_audit": {
         const result = await aivilCall("POST", `/agents/${args.agent_id}/audit`, {
-          action:        args.action_type,
-          action_type:   args.action_type,
-          amount:        args.action_amount || 0,
-          action_amount: args.action_amount || 0,
-          domain:        args.action_domain || "",
-          action_domain: args.action_domain || "",
-          description:   args.description || "",
-        }, key);
+  action: {
+    type:        args.action_type,
+    amount:      args.action_amount || 0,
+    domain:      args.action_domain || "",
+    description: args.description || "",
+  }
+}, key);
 
         if (result.error) return { error: result.error };
 
