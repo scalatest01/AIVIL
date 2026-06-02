@@ -9,6 +9,7 @@ const C = {
 };
 
 const NAV_SECTIONS = [
+  { id:"gateway", label:"B2B Gateway ✦ New" },
   { id:"quickstart", label:"Quick Start" },
   { id:"mcp", label:"MCP Server ✦ New" },
   { id:"authentication", label:"Authentication" },
@@ -302,6 +303,30 @@ if (verdict.status === "BLOCKED") {
             </div>
           </Section>
           {/* ─────────────────────────────────────────────────────────────── */}
+
+          <Section id="gateway" title="B2B API Gateway">
+  <div style={{ background:`rgba(201,168,76,0.06)`, border:`1px solid ${C.gold}44`, borderRadius:8, padding:16, marginBottom:24 }}>
+    <div style={{ fontSize:11, color:C.gold, fontFamily:"'JetBrains Mono',monospace", letterSpacing:2, marginBottom:6 }}>ZERO CODE CHANGES REQUIRED</div>
+    <div style={{ fontSize:13, color:C.textMid, lineHeight:1.8 }}>
+      Route your existing LLM calls through the AIVIL Gateway. Every request is policy-checked and audit-logged before reaching the provider. Just change one URL.
+    </div>
+  </div>
+  <h3>Gateway URL</h3>
+  <Code lang="text">https://gateway.aivildev.com</Code>
+  <h3>Usage</h3>
+  <Code>{`// Before
+const openai = new OpenAI({ baseURL: "https://api.openai.com" })
+
+// After — one line change, full AIVIL protection
+const openai = new OpenAI({ baseURL: "https://gateway.aivildev.com/openai" })`}</Code>
+  <h3>Supported Providers</h3>
+  <Code lang="text">{`gateway.aivildev.com/openai     → api.openai.com
+gateway.aivildev.com/anthropic  → api.anthropic.com
+gateway.aivildev.com/groq       → api.groq.com
+gateway.aivildev.com/cohere     → api.cohere.com
+gateway.aivildev.com/mistral    → api.mistral.ai
+gateway.aivildev.com/together   → api.together.xyz`}</Code>
+</Section>
 
           {/* Authentication */}
           <Section id="authentication" title="Authentication">
