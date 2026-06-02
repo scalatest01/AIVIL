@@ -1173,11 +1173,8 @@ export default function RealDashboard() {
       const agentsData = await api("GET", "/agents", null, key);
       if(agentsData.error) { setLoading(false); return; }
       if(agentsData.agents) setAgents(agentsData.agents);
-      const statsData = await api("GET", "/stats", null, key);
-      if(statsData.stats) {
-        const s = statsData.stats;
-        setDeveloper({ name: s.name || s.developer_name || "", email: s.email || s.developer_email || "", plan: s.plan || "free", created_at: s.created_at || s.member_since });
-      }
+      const meData = await api("GET", "/me", null, key);
+      if(meData.developer) setDeveloper(meData.developer);
       const allLogs = [];
       for(const agent of agentsData.agents||[]) {
         const logs = await api("GET", `/agents/${agent.id}/audit?limit=20`, null, key);
