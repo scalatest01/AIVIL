@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import VulnerabilityScanner from "./VulnerabilityScanner";
 const useInView = (threshold = 0.15) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false); 
@@ -386,13 +387,26 @@ export default function Landing() {
         </div>
 
         <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(48px,8vw,96px)", fontWeight: 300, textAlign: "center", lineHeight: 1.1, letterSpacing: -1, marginBottom: 24, maxWidth: 900 }}>
-          Every AI agent<br />
-          <span style={{ fontStyle: "italic", color: "#c9a84c" }}>deserves an identity.</span>
+          Your AI agent is running.<br />
+          <span style={{ fontStyle: "italic", color: "#c9a84c" }}>Do you know what it's doing?</span>
         </h1>
 
-        <p style={{ fontSize: 18, color: "#6b7a9a", textAlign: "center", maxWidth: 560, lineHeight: 1.8, marginBottom: 48, fontWeight: 300 }}>
-          AIVIL is the civil registry for artificial intelligence. Verified identities, life records, and policy controls for every AI agent on earth.
+        <p style={{ fontSize: 18, color: "#6b7a9a", textAlign: "center", maxWidth: 580, lineHeight: 1.8, marginBottom: 24, fontWeight: 300 }}>
+          Uncontrolled AI agents burn money in runaway loops, leak data, and act without oversight. AIVIL stops this in 3 lines of code.
         </p>
+
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center", marginBottom: 40 }}>
+          {[
+            { icon: "✕", text: "Agent loops overnight → unexpected bill" },
+            { icon: "✕", text: "No audit trail → zero legal protection" },
+            { icon: "✕", text: "Agent acts unilaterally → data leak" },
+          ].map(({ icon, text }) => (
+            <div key={text} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: "#ff4d6a", fontSize: 12 }}>{icon}</span>
+              <span style={{ fontSize: 12, color: "#3d5070", fontFamily: "'JetBrains Mono',monospace" }}>{text}</span>
+            </div>
+          ))}
+        </div>
 
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", marginBottom: 80 }}>
           <button onClick={() => { sessionStorage.setItem("aivil_demo", "true"); window.goToApp && window.goToApp(); }} style={{ background: "#c9a84c", color: "#05080f", padding: "14px 32px", borderRadius: 4, fontSize: 13, letterSpacing: 2, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, border: "none", cursor: "pointer" }}>
@@ -557,6 +571,9 @@ export default function Landing() {
           </Reveal>
         </div>
       </section>
+
+      {/* VULNERABILITY SCANNER */}
+      <VulnerabilityScanner />
 
       {/* FOOTER */}
       <footer style={{ borderTop: "1px solid #0d1525", padding: "40px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
