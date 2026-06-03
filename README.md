@@ -5,7 +5,7 @@
 Give every AI agent a **verified identity**, **spending controls**, and a **tamper-proof audit trail**.
 
 [![npm version](https://img.shields.io/npm/v/aivil)](https://npmjs.com/package/aivil)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/scalatest01/AIVIL/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Install
 
@@ -105,5 +105,5 @@ Add to Claude Desktop config — zero code required:
 
 ## License
 
-AGPL-3.0 — Free to use. If you run it as a hosted service, open source your changes.  
+MIT — Free to use. If you run it as a hosted service, open source your changes.  
 Commercial license available: ihimanshu882@gmail.com
