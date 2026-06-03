@@ -579,7 +579,7 @@ export default function Landing() {
       <footer style={{ borderTop: "1px solid #0d1525", padding: "40px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
         <div>
           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: "#c9a84c", letterSpacing: 3, marginBottom: 4 }}>AIVIL</div>
-          <div style={{ fontSize: 11, color: "#2a3a5a", fontFamily: "'JetBrains Mono',monospace", letterSpacing: 1 }}>© 2026 · AGPL v3 License · Open source forever</div>
+          <div style={{ fontSize: 11, color: "#2a3a5a", fontFamily: "'JetBrains Mono',monospace", letterSpacing: 1 }}>© 2026 · MIT License · Open source forever</div>
         </div>
         <div style={{ fontSize: 12, color: "#2a3a5a", fontFamily: "'JetBrains Mono',monospace", letterSpacing: 1, textAlign: "right" }}>
           Every agent. Verified. Accountable. Alive.
