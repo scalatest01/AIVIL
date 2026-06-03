@@ -2,7 +2,7 @@
 // AIVIL — AI Vital Identity Layer  v2.3.2
 // npm install aivil
 // The civil registry for artificial intelligence
-// Open source forever · AGPL-3.0 · github.com/scalatest01/AIVIL
+// Open source forever · MIT · github.com/scalatest01/AIVIL
 // ─────────────────────────────────────────────────────────────────────────────
 
 "use strict";
