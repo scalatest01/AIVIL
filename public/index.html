@@ -4,39 +4,122 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Primary SEO -->
-    <title>AIVIL — AI Vital Identity Layer</title>
-    <meta name="description" content="AIVIL gives every AI agent a verified identity, policy engine, spending controls, and tamper-proof audit trail. Open source. AGPL-3.0." />
+    <!-- ─── PRIMARY SEO ──────────────────────────────────────────────────── -->
+    <title>AIVIL — AI Agent Audit Trail, Policy Engine & Identity | EU AI Act Compliant</title>
+    <meta name="description" content="Stop runaway AI agent costs. AIVIL gives every AI agent a verified identity, spending limits, and cryptographic audit trail in 3 lines of code. EU AI Act compliant. Free forever. npm install aivil." />
+    <meta name="keywords" content="AI agent audit trail, AI agent policy engine, AI agent monitoring, AI agent identity, EU AI Act compliance, LangChain audit, Claude agent monitoring, MCP server, agent governance, agentic AI compliance, AI agent spending limits, tamper-proof audit trail, npm aivil, AI agent security" />
     <meta name="robots" content="index, follow" />
+    <meta name="author" content="AIVIL" />
     <link rel="canonical" href="https://aivildev.com" />
 
-    <!-- Open Graph -->
+    <!-- ─── OPEN GRAPH ────────────────────────────────────────────────────── -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://aivildev.com" />
-    <meta property="og:title" content="AIVIL — AI Vital Identity Layer" />
-    <meta property="og:description" content="Give every AI agent a verified identity, spending controls, and tamper-proof audit trail. Free forever. Open source." />
+    <meta property="og:title" content="AIVIL — AI Agent Audit Trail & Policy Engine" />
+    <meta property="og:description" content="Stop runaway AI agent costs. Verified identity, spending controls, and tamper-proof audit trail for every AI agent. EU AI Act compliant. Free forever." />
     <meta property="og:image" content="https://aivildev.com/og-image.png" />
     <meta property="og:site_name" content="AIVIL" />
+    <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter Card -->
+    <!-- ─── TWITTER CARD ──────────────────────────────────────────────────── -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Aivilopen" />
-    <meta name="twitter:title" content="AIVIL — AI Vital Identity Layer" />
-    <meta name="twitter:description" content="Give every AI agent a verified identity, spending controls, and tamper-proof audit trail." />
+    <meta name="twitter:creator" content="@Aivilopen" />
+    <meta name="twitter:title" content="AIVIL — AI Agent Audit Trail & Policy Engine" />
+    <meta name="twitter:description" content="Stop runaway AI agent costs. Verified identity, spending controls, and tamper-proof audit trail in 3 lines of code. EU AI Act compliant." />
     <meta name="twitter:image" content="https://aivildev.com/og-image.png" />
 
-    <!-- Theme -->
+    <!-- ─── THEME ─────────────────────────────────────────────────────────── -->
     <meta name="theme-color" content="#04060c" />
 
-    <!-- Google Analytics — single instance only, not duplicated in Landing.jsx -->
+    <!-- ─── STRUCTURED DATA (helps Google understand what you are) ──────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "AIVIL",
+      "alternateName": "AI Vital Identity Layer",
+      "url": "https://aivildev.com",
+      "description": "AIVIL gives every AI agent a verified cryptographic identity, policy engine with spending controls, and a tamper-proof audit trail. EU AI Act compliant. Free forever.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Node.js 18+",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Free plan — 5 agents, 1000 audits/month"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "AIVIL",
+        "url": "https://aivildev.com",
+        "email": "ihimanshu882@gmail.com"
+      },
+      "softwareVersion": "1.0.2",
+      "license": "https://www.gnu.org/licenses/agpl-3.0.en.html",
+      "codeRepository": "https://github.com/scalatest01/AIVIL",
+      "keywords": "AI agent, audit trail, policy engine, EU AI Act, agent monitoring, agent identity"
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is AIVIL?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AIVIL is the civil registry for AI agents. It gives every AI agent a verified cryptographic identity, spending controls, and a tamper-proof audit trail in 3 lines of code."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is AIVIL EU AI Act compliant?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. AIVIL's cryptographic audit trail and policy engine directly address EU AI Act high-risk AI obligations taking effect August 2026."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I install AIVIL?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Run npm install aivil. Try it instantly with no signup using apiKey: 'aivil_demo'."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is AIVIL free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. AIVIL is free forever for up to 5 agents and 1,000 audits per month. Pro and Enterprise plans are available for larger usage."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- ─── GOOGLE ANALYTICS ──────────────────────────────────────────────── -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-TD6TJXXNE9"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-TD6TJXXNE9');
-    </script>
 
+      // Track signups as key events
+      window.trackSignup = function() {
+        gtag('event', 'sign_up', { method: 'email' });
+      };
+      // Track demo clicks
+      window.trackDemo = function() {
+        gtag('event', 'demo_start', { method: 'demo_key' });
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>
