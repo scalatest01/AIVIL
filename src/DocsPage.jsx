@@ -138,7 +138,7 @@ export default function DocsPage() {
             </p>
             <div style={{ display:"flex", gap:10 }}>
               <Badge label="v1.0.2" color={C.gold}/>
-              <Badge label="AGPL v3" color={C.green}/>
+              <Badge label="MIT License" color={C.green}/>
               <Badge label="OPEN SOURCE" color={C.blue}/>
               <Badge label="MCP READY" color={C.purple}/>
               <Badge label="GATEWAY READY" color={C.green}/>
